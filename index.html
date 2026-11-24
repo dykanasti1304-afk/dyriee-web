@@ -90,14 +90,14 @@
       <div class="tab" onclick="switchTab('pecah', event)">Pecah file</div>
     </div>
 
-    <!-- Tab Tersimpan -->
+    <!-- Tab Tersimpan (Otomatis Baca accounts.json) -->
     <div id="tab-tersimpan" class="tab-content active">
       <div class="data-card">
         <div class="data-header">
-          <div class="data-title" id="savedTitle">Belum ada data</div>
+          <div class="data-title" id="savedTitle">Memuat data...</div>
           <input type="checkbox" style="width: 18px; height: 18px; accent-color: var(--gold);">
         </div>
-        <p style="font-size: 13px; color: var(--muted);" id="savedSubtitle">Silakan upload file di tab Data Baru.</p>
+        <p style="font-size: 13px; color: var(--muted);" id="savedSubtitle">Sedang mengambil data dari server...</p>
         <div class="badge-row" id="savedBadges"></div>
       </div>
       <button class="btn-primary" onclick="window.location.href='batch.html'">Buka data terpilih</button>
@@ -146,26 +146,35 @@
       document.getElementById(`tab-${tabName}`).classList.add('active');
     }
 
-    // --- LOGIKA SIMPAN DATA ---
-    function saveDataToStorage(usn, pw, ip) {
-      let existing = JSON.parse(localStorage.getItem('dyriee_saved_data') || "[]");
-      existing.push({ usn, pw, ip });
-      localStorage.setItem('dyriee_saved_data', JSON.stringify(existing));
-    }
+    // --- 1. LOGIKA OTOMATIS BACA accounts.json ---
+    async function loadAccountsData() {
+      try {
+        const res = await fetch('accounts.json?t=' + new Date().getTime());
+        const data = await res.json();
+        
+        let total = 0;
+        if (data.bagus) total += data.bagus.length;
+        if (data.biasa) total += data.biasa.length;
+        if (data.jelek) total += data.jelek.length;
 
-    function updateSavedUI() {
-      const saved = JSON.parse(localStorage.getItem('dyriee_saved_data') || "[]");
-      document.getElementById('savedTitle').innerText = saved.length > 0 ? "Data Tersimpan" : "Belum ada data";
-      document.getElementById('savedSubtitle').innerText = saved.length > 0 ? `${saved.length} akun tersimpan` : "Silakan upload file di tab Data Baru.";
-      
-      if (saved.length > 0) {
-        document.getElementById('savedBadges').innerHTML = `<span class="badge gold">${saved.length} AKUN</span>`;
-      } else {
-        document.getElementById('savedBadges').innerHTML = "";
+        if (total > 0) {
+          document.getElementById('savedTitle').innerText = "Data dari Checker.py";
+          document.getElementById('savedSubtitle').innerText = `${total} akun siap di-filter`;
+          document.getElementById('savedBadges').innerHTML = `
+            <span class="badge gold">${total} AKUN</span>
+            <span class="badge" style="color: var(--green);">READY</span>
+          `;
+        } else {
+          document.getElementById('savedTitle').innerText = "Belum ada data";
+          document.getElementById('savedSubtitle').innerText = "Silakan upload file di tab Data Baru.";
+        }
+      } catch (e) {
+        document.getElementById('savedTitle').innerText = "Belum ada data";
+        document.getElementById('savedSubtitle').innerText = "File accounts.json tidak ditemukan.";
       }
     }
 
-    // --- LOGIKA UPLOAD FILE ---
+    // --- 2. LOGIKA UPLOAD FILE MANUAL ---
     function handleFile(input) {
       const file = input.files[0];
       if (!file) return;
@@ -195,22 +204,21 @@
       });
       
       localStorage.setItem('dyriee_saved_data', JSON.stringify(saved));
-      alert(`Berhasil menyimpan ${lines.length} akun!`);
-      updateSavedUI();
+      alert(`Berhasil menyimpan ${lines.length} akun secara lokal!`);
+      loadAccountsData(); // Refresh tampilan
       
-      // Pindah ke halaman dashboard
       if (isFileUpload) window.location.href = 'batch.html';
     }
 
     function hapusData() {
-      if (confirm("Yakin mau hapus semua data tersimpan?")) {
+      if (confirm("Yakin mau hapus semua data lokal?")) {
         localStorage.removeItem('dyriee_saved_data');
-        alert("Data berhasil dihapus!");
-        updateSavedUI();
+        alert("Data lokal berhasil dihapus!");
+        loadAccountsData();
       }
     }
 
-    // --- LOGIKA PECAH FILE ---
+    // --- 3. LOGIKA PECAH FILE ---
     function handleSplitFile(input) {
       const file = input.files[0];
       if (!file) return;
@@ -231,7 +239,6 @@
       const totalBagian = Math.ceil(lines.length / limit);
       alert(`Berhasil memecah ${lines.length} akun menjadi ${totalBagian} bagian.`);
       
-      // Simulasi download file
       for (let i = 0; i < totalBagian; i++) {
         const chunk = lines.slice(i * limit, (i + 1) * limit).join('\n');
         const blob = new Blob([chunk], { type: "text/plain" });
@@ -243,7 +250,7 @@
     }
 
     // Init
-    updateSavedUI();
+    loadAccountsData();
   </script>
 </body>
 </html>
