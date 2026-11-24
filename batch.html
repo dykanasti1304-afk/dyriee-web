@@ -1,0 +1,412 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Dyriee • Batch Filter</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <style>
+    :root { --bg: #0a0a0e; --surface: #14141a; --surface-2: #1e1e26; --border: rgba(255,255,255,0.08); --text: #f4f4f8; --muted: #8e8ea0; --gold: #f5d78e; --green: #10b981; --red: #ef4444; --blue: #3b82f6; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+    body { background: var(--bg); color: var(--text); min-height: 100vh; padding-bottom: 80px; }
+    
+    .header { position: sticky; top: 0; background: rgba(10,10,14,0.9); backdrop-filter: blur(10px); padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); z-index: 100; }
+    .header-left { display: flex; align-items: center; gap: 10px; }
+    .back-btn { width: 36px; height: 36px; background: var(--surface-2); border-radius: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; border: none; color: #fff; }
+    .header-title { font-size: 14px; font-weight: bold; }
+    
+    .container { padding: 15px; display: flex; flex-direction: column; gap: 15px; max-width: 600px; margin: 0 auto; }
+    .search-row { display: flex; gap: 10px; }
+    .search-input { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px 12px 12px 35px; color: #fff; font-size: 14px; }
+    .search-icon { position: absolute; margin-left: 10px; margin-top: 12px; color: var(--muted); }
+    .btn-filter { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px; color: #fff; cursor: pointer; }
+    
+    .overview-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 15px; }
+    .overview-header { display: flex; justify-content: space-between; color: var(--muted); font-size: 11px; font-weight: bold; letter-spacing: 1px; }
+    .total-number { font-size: 40px; font-weight: 900; margin: 5px 0; }
+    .overview-sub { font-size: 12px; color: var(--muted); }
+    
+    .filter-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 15px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; margin-bottom: 10px; }
+    .filter-title { font-size: 12px; font-weight: bold; color: var(--muted); text-transform: uppercase; }
+    .filter-badge { background: var(--surface-2); padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: bold; }
+    
+    .status-tabs { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 5px; scrollbar-width: none; }
+    .status-tabs::-webkit-scrollbar { display: none; }
+    .status-tab { padding: 8px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 20px; font-size: 13px; font-weight: bold; white-space: nowrap; cursor: pointer; color: var(--muted); }
+    .status-tab.active { background: var(--gold); color: #000; border-color: var(--gold); }
+    
+    .acc-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 15px; display: flex; flex-direction: column; gap: 12px; position: relative; margin-bottom: 15px; }
+    .acc-top { display: flex; gap: 15px; }
+    .acc-avatar { width: 80px; height: 80px; border-radius: 12px; background: var(--surface-2); object-fit: cover; }
+    .acc-info { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+    .acc-name { font-size: 16px; font-weight: bold; }
+    .acc-usn { font-size: 13px; color: var(--muted); }
+    .acc-details { display: flex; gap: 10px; font-size: 12px; color: var(--muted); align-items: center; margin-top: 2px; flex-wrap: wrap; }
+    .star-btn { position: absolute; top: 15px; right: 15px; background: transparent; border: none; color: var(--muted); font-size: 20px; cursor: pointer; }
+    
+    .acc-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+    .btn-copy { background: #fff; color: #000; border: none; padding: 12px; border-radius: 10px; font-weight: bold; font-size: 13px; cursor: pointer; }
+    .btn-copy.pw { background: var(--surface-2); color: #fff; border: 1px solid var(--border); }
+    
+    .status-actions { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 5px; }
+    .btn-status { background: var(--surface-2); border: 1px solid var(--border); color: var(--muted); padding: 8px; border-radius: 8px; font-size: 11px; font-weight: bold; cursor: pointer; text-align: center; }
+    .btn-status.active-valid { color: var(--green); border-color: var(--green); }
+    .btn-status.active-invalid { color: var(--red); border-color: var(--red); }
+    .btn-status.active-secure { color: var(--blue); border-color: var(--blue); }
+    .btn-status.active-cross { color: var(--gold); border-color: var(--gold); }
+
+    /* MODAL FILTER */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 999; display: none; align-items: flex-end; }
+    .modal-overlay.active { display: flex; }
+    .modal-content { background: var(--surface); width: 100%; border-radius: 20px 20px 0 0; padding: 20px; max-height: 80vh; overflow-y: auto; }
+    .modal-header { text-align: center; font-weight: bold; margin-bottom: 20px; }
+    .modal-section { margin-bottom: 20px; }
+    .modal-section h4 { font-size: 11px; color: var(--muted); margin-bottom: 10px; font-weight: bold; letter-spacing: 1px; }
+    .chip-group { display: flex; flex-wrap: wrap; gap: 8px; }
+    .chip { background: var(--surface-2); border: 1px solid var(--border); padding: 8px 12px; border-radius: 20px; font-size: 12px; cursor: pointer; color: var(--muted); }
+    .chip.active { background: #fff; color: #000; border-color: #fff; }
+    .btn-apply { background: #fff; color: #000; border: none; padding: 15px; border-radius: 12px; font-weight: bold; width: 100%; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="header-left">
+      <button class="back-btn" onclick="window.location.href='index.html'">←</button>
+      <div class="header-title" id="headerTitle">Data</div>
+    </div>
+    <div class="header-right">
+      <span style="font-size: 12px; background: var(--gold); color:#000; padding: 4px 8px; border-radius: 10px; font-weight: bold;">Tersimpan</span>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="search-row">
+      <div style="position: relative; flex: 1;">
+        <span class="search-icon">🔍</span>
+        <input type="text" class="search-input" id="searchInput" placeholder="Cari username, IP, item..." oninput="renderList()">
+      </div>
+      <button class="btn-filter" onclick="openFilterModal()">☰</button>
+    </div>
+
+    <div class="overview-card">
+      <div class="overview-header">
+        <span>📊 OVERVIEW</span>
+        <span>DETAIL ⌄</span>
+      </div>
+      <div class="total-number" id="statTotal">0</div>
+      <div class="overview-sub" id="statSub">0 dicek · 0 belum</div>
+    </div>
+
+    <div class="filter-card" onclick="openCountryModal()">
+      <div class="filter-title">📍 FILTER NEGARA</div>
+      <div class="filter-badge" id="countryBadge">0 NEGARA ›</div>
+    </div>
+    <div class="filter-card" onclick="openItemModal()">
+      <div class="filter-title">◎ FILTER ITEM RAP</div>
+      <div class="filter-badge" id="itemBadge">0 ITEM ›</div>
+    </div>
+
+    <div class="status-tabs">
+      <div class="status-tab active" onclick="setTab('active', event)">Active <span style="background: rgba(0,0,0,0.1); padding: 2px 6px; border-radius: 10px;" id="cnt-active">0</span></div>
+      <div class="status-tab" onclick="setTab('valid', event)">Valid <span id="cnt-valid">0</span></div>
+      <div class="status-tab" onclick="setTab('invalid', event)">Invalid <span id="cnt-invalid">0</span></div>
+      <div class="status-tab" onclick="setTab('secure', event)">Secure <span id="cnt-secure">0</span></div>
+      <div class="status-tab" onclick="setTab('cross', event)">Cross <span id="cnt-cross">0</span></div>
+    </div>
+
+    <div id="accList"></div>
+  </div>
+
+  <!-- MODAL FILTER UTAMA -->
+  <div class="modal-overlay" id="filterModal">
+    <div class="modal-content">
+      <div class="modal-header">Filters</div>
+      <div class="modal-section">
+        <h4>URUTKAN</h4>
+        <select id="sortOrder" onchange="renderList()" style="width: 100%; padding: 10px; background: var(--surface-2); color: #fff; border: 1px solid var(--border); border-radius: 8px;">
+          <option value="default">Original order</option>
+          <option value="rap_desc">RAP Tertinggi</option>
+          <option value="rap_asc">RAP Terendah</option>
+        </select>
+      </div>
+      <div class="modal-section">
+        <h4>TAMPILKAN</h4>
+        <div class="chip-group" id="filterChips">
+          <div class="chip active" data-filter="all">Semua</div>
+          <div class="chip" data-filter="avatar">Dengan avatar</div>
+          <div class="chip" data-filter="ip">Dengan IP</div>
+          <div class="chip" data-filter="headless">Headless</div>
+          <div class="chip" data-filter="korblox">Korblox</div>
+          <div class="chip" data-filter="malivinius">Malivinius</div>
+          <div class="chip" data-filter="has_verified">Has Mail</div>
+        </div>
+      </div>
+      <button class="btn-apply" onclick="closeFilterModal()">Terapkan</button>
+    </div>
+  </div>
+
+  <!-- MODAL FILTER NEGARA -->
+  <div class="modal-overlay" id="countryModal">
+    <div class="modal-content">
+      <div class="modal-header">Pilih Negara</div>
+      <div class="chip-group" id="countryChips" style="max-height: 50vh; overflow-y: auto;">
+        <!-- Chip negara bakal di-generate di sini -->
+      </div>
+      <button class="btn-apply" style="margin-top: 20px;" onclick="closeCountryModal()">Tutup</button>
+    </div>
+  </div>
+
+  <!-- MODAL FILTER ITEM -->
+  <div class="modal-overlay" id="itemModal">
+    <div class="modal-content">
+      <div class="modal-header">Filter Item RAP</div>
+      <div class="chip-group" id="itemChips" style="max-height: 50vh; overflow-y: auto;">
+        <!-- Chip item bakal di-generate di sini -->
+      </div>
+      <button class="btn-apply" style="margin-top: 20px;" onclick="closeItemModal()">Tutup</button>
+    </div>
+  </div>
+
+  <script>
+    let rawData = [];
+    let currentTab = 'active';
+    let localStatuses = {};
+    let currentFilter = 'all';
+    let currentCountry = 'all';
+    let currentItem = 'all';
+
+    // 1. Ambil data dari localStorage
+    const storedData = localStorage.getItem('dyriee_raw_data');
+    if (storedData) {
+      rawData = storedData.split('\n').filter(l => l.trim() !== '').map((line, index) => {
+        const parts = line.split(':');
+        return {
+          id: index,
+          usn: parts[0] || "Unknown",
+          pw: parts[1] || "-",
+          ip: parts[2] || "-",
+          country: "Memuat...",
+          rap: 0,
+          avatar: "https://tr.rbxcdn.com/30DAY-AvatarHeadshot-A4F764CB5B7A62140A826DCBA9EE5F7E-Png/150/150/AvatarHeadshot/Webp/noFilter",
+          headless: false,
+          korblox: false,
+          malivinius: false,
+          has_verified: false,
+          hasIP: parts[2] && parts[2] !== "-",
+          status: 'active'
+        };
+      });
+    }
+
+    // 2. Fungsi deteksi Negara
+    async function fetchCountryForIP(ip, id) {
+      if (!ip || ip === "-") return;
+      try {
+        const res = await fetch(`https://ipwho.is/${ip}`);
+        const data = await res.json();
+        if (data.success) {
+          const acc = rawData.find(a => a.id === id);
+          if (acc) {
+            acc.country = data.country;
+            renderList();
+            renderStats();
+          }
+        }
+      } catch(e) {}
+    }
+
+    // 3. Fungsi ambil Avatar & RAP dari Roblox
+    async function fetchRapForUser(usn, id) {
+      if (!usn) return;
+      try {
+        const res = await fetch(`https://users.roblox.com/v1/usernames/users`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ usernames: [usn], excludeBannedUsers: false })
+        });
+        const data = await res.json();
+        
+        if (data.data && data.data.length > 0) {
+          const userId = data.data[0].id;
+          const acc = rawData.find(a => a.id === id);
+          
+          // Avatar
+          const avatarRes = await fetch(`https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${userId}&size=150x150&format=Png&isCircular=false`);
+          const avatarData = await avatarRes.json();
+          if (avatarData.data && avatarData.data.length > 0) {
+            acc.avatar = avatarData.data[0].imageUrl;
+          }
+
+          // Simulasi RAP (0) karena butuh auth
+          acc.rap = 0; 
+          renderList();
+          renderStats();
+        }
+      } catch(e) {}
+    }
+
+    // Panggil fungsi fetch buat semua akun
+    rawData.forEach(acc => {
+      if (acc.ip) fetchCountryForIP(acc.ip, acc.id);
+      if (acc.usn) fetchRapForUser(acc.usn, acc.id);
+    });
+
+    // --- LOGIKA UI ---
+    function openFilterModal() { document.getElementById('filterModal').classList.add('active'); }
+    function closeFilterModal() { document.getElementById('filterModal').classList.remove('active'); }
+    
+    function openCountryModal() {
+      const modal = document.getElementById('countryModal');
+      const container = document.getElementById('countryChips');
+      const countries = [...new Set(rawData.map(a => a.country).filter(c => c !== "Memuat..." && c !== "Unknown"))].sort();
+      
+      container.innerHTML = `<div class="chip ${currentCountry === 'all' ? 'active' : ''}" onclick="setCountry('all')">Semua Negara</div>`;
+      countries.forEach(c => {
+        container.innerHTML += `<div class="chip ${currentCountry === c ? 'active' : ''}" onclick="setCountry('${c}')">${c}</div>`;
+      });
+      modal.classList.add('active');
+    }
+    function closeCountryModal() { document.getElementById('countryModal').classList.remove('active'); }
+    function setCountry(c) { currentCountry = c; closeCountryModal(); renderList(); }
+
+    function openItemModal() {
+      const modal = document.getElementById('itemModal');
+      const container = document.getElementById('itemChips');
+      
+      container.innerHTML = `
+        <div class="chip ${currentItem === 'all' ? 'active' : ''}" onclick="setItem('all')">Semua Item</div>
+        <div class="chip ${currentItem === 'headless' ? 'active' : ''}" onclick="setItem('headless')">Headless Horseman</div>
+        <div class="chip ${currentItem === 'korblox' ? 'active' : ''}" onclick="setItem('korblox')">Korblox Deathspeaker</div>
+        <div class="chip ${currentItem === 'malivinius' ? 'active' : ''}" onclick="setItem('malivinius')">Malivinius</div>
+      `;
+      modal.classList.add('active');
+    }
+    function closeItemModal() { document.getElementById('itemModal').classList.remove('active'); }
+    function setItem(i) { currentItem = i; closeItemModal(); renderList(); }
+
+    function setTab(tab, e) {
+      document.querySelectorAll('.status-tab').forEach(t => t.classList.remove('active'));
+      if(e) e.target.classList.add('active');
+      currentTab = tab;
+      renderList();
+    }
+
+    document.querySelectorAll('#filterChips .chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        document.querySelectorAll('#filterChips .chip').forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        currentFilter = chip.dataset.filter;
+        renderList();
+      });
+    });
+
+    function renderStats() {
+      document.getElementById('statTotal').innerText = rawData.length;
+      
+      const validCount = Object.values(localStatuses).filter(s => s === 'valid').length;
+      const invalidCount = Object.values(localStatuses).filter(s => s === 'invalid').length;
+      const secureCount = Object.values(localStatuses).filter(s => s === 'secure').length;
+      const crossCount = Object.values(localStatuses).filter(s => s === 'cross').length;
+      const activeCount = rawData.length - (validCount + invalidCount + secureCount + crossCount);
+
+      document.getElementById('statSub').innerText = `${activeCount} belum dicek`;
+      document.getElementById('cnt-active').innerText = activeCount;
+      document.getElementById('cnt-valid').innerText = validCount;
+      document.getElementById('cnt-invalid').innerText = invalidCount;
+      document.getElementById('cnt-secure').innerText = secureCount;
+      document.getElementById('cnt-cross').innerText = crossCount;
+
+      const uniqueCountries = new Set(rawData.map(a => a.country).filter(c => c !== "Memuat..." && c !== "Unknown"));
+      document.getElementById('countryBadge').innerText = `${uniqueCountries.size} NEGARA ›`;
+    }
+
+    function renderList() {
+      const searchQ = document.getElementById('searchInput').value.toLowerCase();
+      const sortOrder = document.getElementById('sortOrder').value;
+      const accList = document.getElementById('accList');
+      
+      let displayData = rawData.filter(acc => {
+        const st = localStatuses[acc.id] || 'active';
+        
+        if (currentTab !== 'active' && st !== currentTab) return false;
+        if (currentTab === 'active' && st !== 'active') return false;
+        
+        if (currentCountry !== 'all' && acc.country !== currentCountry) return false;
+        if (currentItem !== 'all' && !acc[currentItem]) return false;
+        
+        if (currentFilter === 'ip' && !acc.hasIP) return false;
+        if (currentFilter === 'headless' && !acc.headless) return false;
+        if (currentFilter === 'korblox' && !acc.korblox) return false;
+        if (currentFilter === 'malivinius' && !acc.malivinius) return false;
+        if (currentFilter === 'has_verified' && !acc.has_verified) return false;
+
+        if (searchQ) {
+          const hay = `${acc.usn} ${acc.ip} ${acc.country}`.toLowerCase();
+          if (!hay.includes(searchQ)) return false;
+        }
+        return true;
+      });
+
+      if (sortOrder === 'rap_desc') displayData.sort((a,b) => b.rap - a.rap);
+      if (sortOrder === 'rap_asc') displayData.sort((a,b) => a.rap - b.rap);
+
+      if (displayData.length === 0) {
+        accList.innerHTML = `<div style="text-align:center; padding: 20px; color: var(--muted);">Tidak ada data yang cocok.</div>`;
+        return;
+      }
+
+      accList.innerHTML = displayData.slice(0, 50).map(acc => {
+        const currentStatus = localStatuses[acc.id] || 'active';
+        const cValid = currentStatus === 'valid' ? 'active-valid' : '';
+        const cInvalid = currentStatus === 'invalid' ? 'active-invalid' : '';
+        const cSecure = currentStatus === 'secure' ? 'active-secure' : '';
+        const cCross = currentStatus === 'cross' ? 'active-cross' : '';
+
+        const limitedTags = [];
+        if(acc.headless) limitedTags.push(`<span style="background:#d97706; color:#fff; padding:2px 5px; border-radius:4px; font-size:10px;">H</span>`);
+        if(acc.korblox) limitedTags.push(`<span style="background:#9333ea; color:#fff; padding:2px 5px; border-radius:4px; font-size:10px;">K</span>`);
+        if(acc.malivinius) limitedTags.push(`<span style="background:#0ea5e9; color:#fff; padding:2px 5px; border-radius:4px; font-size:10px;">M</span>`);
+
+        return `
+          <div class="acc-card">
+            <button class="star-btn">☆</button>
+            <div class="acc-top">
+              <img class="acc-avatar" src="${acc.avatar}">
+              <div class="acc-info">
+                <div class="acc-name">${acc.usn}</div>
+                <div class="acc-usn">@${acc.usn}</div>
+                <div class="acc-details">
+                  ◎ ${acc.rap} &nbsp; 📍 ${acc.country} &nbsp; 🌐 ${acc.ip}
+                  ${acc.has_verified ? `<span style="background:#10b981; color:#fff; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:bold;">MAIL</span>` : ''}
+                </div>
+                <div style="display:flex; gap:5px; margin-top:5px;">${limitedTags.join('')}</div>
+              </div>
+            </div>
+            <div class="acc-actions">
+              <button class="btn-copy" onclick="navigator.clipboard.writeText('${acc.usn}'); alert('USN Dicopy!')">❏ Salin USN</button>
+              <button class="btn-copy pw" onclick="navigator.clipboard.writeText('${acc.pw}'); alert('PW Dicopy!')">⚷ Salin PW</button>
+            </div>
+            <div class="status-actions">
+              <button class="btn-status ${cValid}" onclick="setStatus(${acc.id}, 'valid')">VALID</button>
+              <button class="btn-status ${cInvalid}" onclick="setStatus(${acc.id}, 'invalid')">INVALID</button>
+              <button class="btn-status ${cSecure}" onclick="setStatus(${acc.id}, 'secure')">SECURE</button>
+              <button class="btn-status ${cCross}" onclick="setStatus(${acc.id}, 'cross')">CROSS</button>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function setStatus(id, status) {
+      if (localStatuses[id] === status) delete localStatuses[id];
+      else localStatuses[id] = status;
+      renderStats();
+      renderList();
+    }
+
+    // Init
+    renderStats();
+    renderList();
+  </script>
+</body>
+</html>
