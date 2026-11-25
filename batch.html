@@ -174,13 +174,12 @@
     let currentCountry = 'all';
     let currentItem = 'all';
 
-    // 1. Ambil data dari accounts.json (BUKAN localStorage lagi)
+    // 1. Ambil data dari accounts.json
     async function loadAccountsData() {
       try {
         const res = await fetch('accounts.json?t=' + new Date().getTime());
         const json = await res.json();
         
-        // Gabungin data bagus, biasa, jelek jadi satu array
         const bagus = (json.bagus || []).map(a => ({ ...a, category: 'bagus' }));
         const biasa = (json.biasa || []).map(a => ({ ...a, category: 'biasa' }));
         const jelek = (json.jelek || []).map(a => ({ ...a, category: 'jelek' }));
@@ -206,10 +205,34 @@
         renderStats();
         renderList();
         document.getElementById('headerTitle').innerText = "Data Checker (" + rawData.length + ")";
+        
+        // Cek negara otomatis buat yang "Unknown"
+        rawData.forEach(acc => {
+          if (acc.country === "Unknown" && acc.ip && acc.ip !== "-") {
+            fetchCountryForIP(acc.ip, acc.id);
+          }
+        });
+
       } catch(e) {
         console.error("Gagal load accounts.json", e);
         document.getElementById('accList').innerHTML = `<div style="text-align:center; padding: 20px; color: var(--muted);">Gagal memuat accounts.json. Pastikan file ada di GitHub.</div>`;
       }
+    }
+
+    // Fungsi nembak API ipwho.is
+    async function fetchCountryForIP(ip, id) {
+      try {
+        const res = await fetch(`https://ipwho.is/${ip}`);
+        const data = await res.json();
+        if (data.success) {
+          const acc = rawData.find(a => a.id === id);
+          if (acc) {
+            acc.country = data.country;
+            renderList();
+            renderStats();
+          }
+        }
+      } catch(e) {}
     }
 
     // --- LOGIKA UI ---
@@ -365,7 +388,6 @@
       renderList();
     }
 
-    // Panggil data pas halaman dibuka
     loadAccountsData();
   </script>
 </body>
