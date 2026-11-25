@@ -22,9 +22,17 @@
     .btn-filter { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px; color: #fff; cursor: pointer; }
     
     .overview-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 15px; }
-    .overview-header { display: flex; justify-content: space-between; color: var(--muted); font-size: 11px; font-weight: bold; letter-spacing: 1px; }
+    .overview-header { display: flex; justify-content: space-between; color: var(--muted); font-size: 11px; font-weight: bold; letter-spacing: 1px; cursor: pointer; }
     .total-number { font-size: 40px; font-weight: 900; margin: 5px 0; }
     .overview-sub { font-size: 12px; color: var(--muted); }
+    
+    /* Style buat Detail Grid */
+    .detail-grid { display: none; flex-direction: column; gap: 10px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.05); margin-top: 10px; }
+    .detail-grid.open { display: flex; }
+    .metric-row { display: flex; justify-content: space-between; font-size: 13px; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+    .metric-row:last-child { border-bottom: none; }
+    .metric-label { color: var(--muted); }
+    .metric-val { font-weight: bold; }
     
     .filter-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 15px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; margin-bottom: 10px; }
     .filter-title { font-size: 12px; font-weight: bold; color: var(--muted); text-transform: uppercase; }
@@ -89,12 +97,25 @@
     </div>
 
     <div class="overview-card">
-      <div class="overview-header">
+      <div class="overview-header" onclick="toggleDetail()">
         <span>📊 OVERVIEW</span>
-        <span>DETAIL ⌄</span>
+        <span id="detailBtn">DETAIL ⌄</span>
       </div>
       <div class="total-number" id="statTotal">0</div>
       <div class="overview-sub" id="statSub">0 dicek · 0 belum</div>
+      
+      <!-- Panel Detail -->
+      <div class="detail-grid" id="detailGrid">
+        <div class="metric-row"><span class="metric-label">Total RAP</span><span class="metric-val" id="statTotalRap" style="color: var(--gold);">0</span></div>
+        <div class="metric-row"><span class="metric-label">Valid</span><span class="metric-val" id="statValidDetail" style="color: var(--green);">0</span></div>
+        <div class="metric-row"><span class="metric-label">Invalid</span><span class="metric-val" id="statInvalidDetail" style="color: var(--red);">0</span></div>
+        <div class="metric-row"><span class="metric-label">Secure</span><span class="metric-val" id="statSecureDetail" style="color: var(--blue);">0</span></div>
+        <div class="metric-row"><span class="metric-label">Cross</span><span class="metric-val" id="statCrossDetail" style="color: var(--gold);">0</span></div>
+        <div class="metric-row"><span class="metric-label">Headless</span><span class="metric-val" id="statHeadless" style="color: #fbbf24;">0</span></div>
+        <div class="metric-row"><span class="metric-label">Korblox</span><span class="metric-val" id="statKorblox" style="color: #a855f7;">0</span></div>
+        <div class="metric-row"><span class="metric-label">Malivinius</span><span class="metric-val" id="statMalivinius" style="color: #38bdf8;">0</span></div>
+        <div class="metric-row"><span class="metric-label">Has Mail</span><span class="metric-val" id="statHasMail" style="color: var(--green);">0</span></div>
+      </div>
     </div>
 
     <div class="filter-card" onclick="openCountryModal()">
@@ -236,6 +257,18 @@
     }
 
     // --- LOGIKA UI ---
+    function toggleDetail() {
+      const grid = document.getElementById('detailGrid');
+      const btn = document.getElementById('detailBtn');
+      if (grid.classList.contains('open')) {
+        grid.classList.remove('open');
+        btn.innerText = "DETAIL ⌄";
+      } else {
+        grid.classList.add('open');
+        btn.innerText = "TUTUP ⌃";
+      }
+    }
+
     function openFilterModal() { document.getElementById('filterModal').classList.add('active'); }
     function closeFilterModal() { document.getElementById('filterModal').classList.remove('active'); }
     
@@ -285,20 +318,32 @@
     });
 
     function renderStats() {
-      document.getElementById('statTotal').innerText = rawData.length;
-      
+      const total = rawData.length;
       const validCount = Object.values(localStatuses).filter(s => s === 'valid').length;
       const invalidCount = Object.values(localStatuses).filter(s => s === 'invalid').length;
       const secureCount = Object.values(localStatuses).filter(s => s === 'secure').length;
       const crossCount = Object.values(localStatuses).filter(s => s === 'cross').length;
-      const activeCount = rawData.length - (validCount + invalidCount + secureCount + crossCount);
+      const activeCount = total - (validCount + invalidCount + secureCount + crossCount);
 
+      document.getElementById('statTotal').innerText = total;
       document.getElementById('statSub').innerText = `${activeCount} belum dicek`;
       document.getElementById('cnt-active').innerText = activeCount;
       document.getElementById('cnt-valid').innerText = validCount;
       document.getElementById('cnt-invalid').innerText = invalidCount;
       document.getElementById('cnt-secure').innerText = secureCount;
       document.getElementById('cnt-cross').innerText = crossCount;
+
+      // Detail Stats
+      const totalRap = rawData.reduce((acc, x) => acc + (x.rap || 0), 0);
+      document.getElementById('statTotalRap').innerText = totalRap.toLocaleString();
+      document.getElementById('statValidDetail').innerText = validCount;
+      document.getElementById('statInvalidDetail').innerText = invalidCount;
+      document.getElementById('statSecureDetail').innerText = secureCount;
+      document.getElementById('statCrossDetail').innerText = crossCount;
+      document.getElementById('statHeadless').innerText = rawData.filter(a => a.headless).length;
+      document.getElementById('statKorblox').innerText = rawData.filter(a => a.korblox).length;
+      document.getElementById('statMalivinius').innerText = rawData.filter(a => a.malivinius).length;
+      document.getElementById('statHasMail').innerText = rawData.filter(a => a.has_verified).length;
 
       const uniqueCountries = new Set(rawData.map(a => a.country).filter(c => c !== "Memuat..." && c !== "Unknown"));
       document.getElementById('countryBadge').innerText = `${uniqueCountries.size} NEGARA ›`;
