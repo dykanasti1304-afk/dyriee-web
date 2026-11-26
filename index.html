@@ -4,62 +4,114 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Dyriee • Account Filter</title>
-  <link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;700&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@500;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
-    :root { --bg: #0a0a0e; --surface: #14141a; --surface-2: #1e1e26; --border: rgba(255,255,255,0.08); --text: #f4f4f8; --muted: #8e8ea0; --gold: #f5d78e; --red: #ef4444; --green: #10b981; }
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
-    body { background: var(--bg); color: var(--text); padding: 20px; display: flex; justify-content: center; min-height: 100vh; }
-    .container { width: 100%; max-width: 500px; display: flex; flex-direction: column; gap: 20px; }
+    :root {
+      --bg: #0c0c0e; --surface: #151518; --surface-2: #1e1e23; --surface-hover: #25252b;
+      --border: rgba(255, 255, 255, 0.08); --border-light: rgba(255, 255, 255, 0.14);
+      --text: #f4f4f6; --muted: #8a8a93; --cream: #f6e7b8; --cream-dark: #8c8266;
+      --red: #e55353; --red-bg: rgba(229, 83, 83, 0.06); --red-border: rgba(229, 83, 83, 0.25);
+      --green: #34d399; --blue: #38bdf8; --purple: #c084fc;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+    body {
+      background-color: var(--bg);
+      background-image: linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+      background-size: 64px 100%;
+      color: var(--text); padding: 20px 18px 40px; display: flex; justify-content: center; min-height: 100vh;
+    }
+    .container { width: 100%; max-width: 480px; display: flex; flex-direction: column; gap: 22px; }
+
     .header { display: flex; justify-content: space-between; align-items: center; }
-    .brand { display: flex; align-items: center; gap: 10px; }
-    .brand-icon { width: 40px; height: 40px; background: var(--surface-2); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
-    .brand-text h1 { font-size: 16px; font-weight: 800; letter-spacing: 1px; }
-    .brand-text p { font-size: 10px; color: var(--muted); letter-spacing: 2px; }
-    .title-area h2 { font-family: 'Pixelify Sans', sans-serif; font-size: 32px; color: var(--gold); line-height: 1.2; }
-    .title-area p { color: var(--muted); font-size: 13px; margin-top: 5px; }
-    .quota-card { background: var(--surface); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 16px; padding: 15px; }
-    .quota-header { display: flex; justify-content: space-between; font-size: 11px; font-weight: bold; color: var(--muted); letter-spacing: 1px; margin-bottom: 8px; }
-    .quota-bar { height: 4px; background: var(--surface-2); border-radius: 2px; overflow: hidden; margin-bottom: 10px; }
-    .quota-fill { height: 100%; background: var(--red); width: 100%; }
-    .quota-actions { display: flex; gap: 10px; }
-    .btn-outline { background: var(--surface-2); border: 1px solid var(--border); color: var(--text); padding: 8px 16px; border-radius: 8px; font-size: 13px; cursor: pointer; }
-    .tabs { display: flex; background: var(--surface); border-radius: 12px; padding: 5px; gap: 5px; }
-    .tab { flex: 1; padding: 10px; text-align: center; font-size: 13px; font-weight: 600; border-radius: 8px; cursor: pointer; color: var(--muted); }
-    .tab.active { background: var(--gold); color: #000; }
-    .tab-content { display: none; flex-direction: column; gap: 15px; }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .brand-icon { width: 40px; height: 40px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 11px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13px; color: var(--cream); letter-spacing: -0.5px; }
+    .brand-text h1 { font-size: 15px; font-weight: 700; color: #fff; }
+    .brand-text p { font-size: 10px; color: var(--muted); letter-spacing: 1.5px; margin-top: 2px; font-weight: 600; }
+    .header-user { display: flex; align-items: center; gap: 10px; }
+    .user-name { font-size: 13px; color: var(--muted); font-weight: 500; }
+    .btn-logout { width: 34px; height: 34px; background: var(--surface); border: 1px solid var(--border); border-radius: 9px; display: flex; align-items: center; justify-content: center; color: var(--muted); cursor: pointer; }
+
+    .title-area h2 { font-family: 'Pixelify Sans', sans-serif; font-size: 32px; font-weight: 700; color: #fff; line-height: 1.15; letter-spacing: 0.5px; }
+    .title-area h2 span { color: var(--cream); }
+    .title-area p { color: var(--muted); font-size: 13.5px; line-height: 1.5; margin-top: 8px; }
+
+    .quota-card { background: linear-gradient(180deg, rgba(229,83,83,0.08) 0%, rgba(21,21,24,0.9) 100%); border: 1px solid var(--red-border); border-radius: 16px; padding: 16px; }
+    .quota-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .quota-label { font-size: 11px; font-weight: 700; color: var(--muted); letter-spacing: 1.5px; }
+    .quota-count { font-size: 13px; font-weight: 700; color: var(--red); font-family: monospace; }
+    .quota-bar { height: 5px; background: rgba(255,255,255,0.08); border-radius: 99px; overflow: hidden; margin-bottom: 10px; }
+    .quota-fill { height: 100%; background: var(--red); width: 100%; border-radius: 99px; }
+    .quota-note { font-size: 11.5px; color: var(--muted); font-family: monospace; margin-bottom: 14px; }
+    .quota-actions { display: flex; gap: 10px; align-items: center; }
+    .btn-pill { background: var(--surface-2); border: 1px solid var(--border-light); color: var(--text); padding: 8px 14px; border-radius: 10px; font-size: 12.5px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+
+    .tabs { display: flex; background: var(--surface); border: 1px solid var(--border); border-radius: 13px; padding: 4px; gap: 4px; }
+    .tab { flex: 1; padding: 10px 8px; text-align: center; font-size: 13px; font-weight: 600; border-radius: 9px; cursor: pointer; color: var(--muted); transition: all 0.2s; }
+    .tab.active { background: var(--cream); color: #111; font-weight: 700; }
+
+    .tab-content { display: none; flex-direction: column; gap: 14px; }
     .tab-content.active { display: flex; }
-    .data-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 15px; display: flex; flex-direction: column; gap: 10px; }
-    .badge-row { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 5px; }
-    .badge { font-size: 10px; padding: 3px 6px; border-radius: 4px; border: 1px solid var(--border); color: var(--muted); }
-    .badge.gold { color: var(--gold); border-color: rgba(245,215,142,0.3); }
-    .btn-primary { background: var(--gold); color: #000; font-weight: bold; border: none; padding: 15px; border-radius: 12px; font-size: 14px; cursor: pointer; width: 100%; }
-    .btn-danger { background: transparent; border: 1px solid rgba(239,68,68,0.4); color: var(--red); padding: 12px; border-radius: 12px; font-size: 13px; font-weight: bold; cursor: pointer; width: 100%; }
-    .dropzone { border: 2px dashed var(--border); border-radius: 16px; padding: 30px; text-align: center; color: var(--muted); cursor: pointer; }
-    textarea { width: 100%; height: 120px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 12px; padding: 10px; color: #fff; font-family: monospace; font-size: 12px; resize: none; }
-    input[type="text"] { width: 100%; background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px; padding: 12px; color: #fff; font-size: 14px; }
+
+    .data-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 16px; display: flex; align-items: flex-start; gap: 14px; cursor: pointer; transition: all 0.2s; }
+    .data-card.selected { background: rgba(246, 231, 184, 0.06); border-color: rgba(246, 231, 184, 0.45); }
+    .custom-check { width: 22px; height: 22px; border-radius: 6px; border: 1.5px solid var(--border-light); background: var(--surface-2); display: flex; align-items: center; justify-content: center; margin-top: 12px; flex-shrink: 0; transition: all 0.15s; }
+    .data-card.selected .custom-check { background: var(--cream); border-color: var(--cream); color: #111; }
+
+    .data-body { flex: 1; min-width: 0; }
+    .data-title { font-size: 15px; font-weight: 700; color: #fff; margin-bottom: 4px; }
+    .data-sub { font-size: 12.5px; color: var(--muted); font-family: monospace; margin-bottom: 10px; }
+    .badge-row { display: flex; gap: 6px; flex-wrap: wrap; }
+    .badge { font-size: 10.5px; font-weight: 700; font-family: monospace; padding: 3px 7px; border-radius: 5px; border: 1px solid var(--border); background: var(--surface-2); color: var(--muted); }
+    .badge.k { color: #c084fc; border-color: rgba(192,132,252,0.3); background: rgba(192,132,252,0.08); }
+    .badge.maliv { color: #38bdf8; border-color: rgba(56,189,248,0.3); background: rgba(56,189,248,0.08); }
+    .badge.mail { color: #34d399; border-color: rgba(52,211,153,0.3); background: rgba(52,211,153,0.08); }
+    .badge.rap { color: var(--cream); border-color: rgba(246,231,184,0.3); background: rgba(246,231,184,0.08); }
+    .badge.priv { color: #f87171; border-color: rgba(248,113,113,0.25); background: rgba(248,113,113,0.08); display: inline-block; margin-top: 6px; }
+
+    .card-actions { display: flex; align-items: center; gap: 10px; margin-top: 12px; color: var(--muted); }
+    .icon-action { background: none; border: none; color: var(--muted); cursor: pointer; padding: 4px; }
+
+    .btn-primary { background: var(--cream); color: #111; font-weight: 700; border: none; padding: 15px; border-radius: 13px; font-size: 14px; cursor: pointer; width: 100%; transition: all 0.2s; }
+    .btn-primary.muted-btn { background: var(--cream-dark); color: #111; }
+    .btn-danger { background: var(--surface); border: 1px solid var(--border-light); color: #d4d4d8; padding: 13px; border-radius: 13px; font-size: 13px; font-weight: 600; cursor: pointer; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .footer-hint { text-align: center; font-size: 12px; color: var(--muted); margin-top: 4px; }
+    .footer-hint a { color: var(--cream); text-decoration: none; font-weight: 600; }
+
+    .field-label { font-size: 11px; color: var(--muted); font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; display: block; }
+    .input-box, .select-box, textarea { width: 100%; background: var(--surface); border: 1px solid var(--border-light); border-radius: 12px; padding: 13px 14px; color: #fff; font-size: 13.5px; outline: none; }
+    textarea { height: 125px; font-family: monospace; font-size: 12.5px; line-height: 1.5; resize: vertical; }
+    .dropzone { border: 1.5px dashed var(--border-light); background: var(--surface); border-radius: 14px; padding: 26px 20px; text-align: center; color: var(--muted); cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+    .file-picker-row { background: var(--surface); border: 1px solid var(--border-light); border-radius: 12px; padding: 10px 12px; display: flex; align-items: center; gap: 10px; cursor: pointer; }
+    .file-picker-badge { background: #e4e4e7; color: #111; font-size: 12px; font-weight: 700; padding: 5px 10px; border-radius: 6px; }
   </style>
 </head>
 <body>
   <div class="container">
     <header class="header">
       <div class="brand">
-        <div class="brand-icon">📦</div>
+        <div class="brand-icon">DY</div>
         <div class="brand-text"><h1>Dyriee</h1><p>ACCOUNT FILTER</p></div>
+      </div>
+      <div class="header-user">
+        <span class="user-name">Dyriee</span>
+        <button class="btn-logout" title="Keluar" onclick="alert('Sesi aktif: Dyriee')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        </button>
       </div>
     </header>
 
     <div class="title-area">
-      <h2>Pilih data kamu.</h2>
+      <h2>Pilih <span>data</span> kamu.</h2>
       <p>Data ditampilkan per kelompok, jadi antar pekerjaan tidak tercampur.</p>
     </div>
 
     <div class="quota-card">
-      <div class="quota-header"><span>KUOTA FILTER</span><span style="color: var(--red);">150 / 150</span></div>
+      <div class="quota-header"><span class="quota-label">KUOTA FILTER</span><span class="quota-count">150 / 150</span></div>
       <div class="quota-bar"><div class="quota-fill"></div></div>
-      <p style="font-size: 11px; color: var(--muted); margin-bottom: 10px;">Kuota habis — hubungi admin</p>
+      <div class="quota-note">Kuota habis — hubungi admin</div>
       <div class="quota-actions">
-        <button class="btn-outline">+ Top up kuota</button>
-        <button class="btn-outline" style="color: var(--gold);">🪙 0/5</button>
+        <button class="btn-pill" onclick="alert('Hubungi admin untuk top up kuota.')">+ Top up kuota</button>
+        <button class="btn-pill" onclick="alert('Koin bonus: 0/5')"><span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:#facc15;"></span> 0/5</button>
       </div>
     </div>
 
@@ -70,97 +122,149 @@
     </div>
 
     <div id="tab-tersimpan" class="tab-content active">
-      <div class="data-card">
-        <div class="data-header" style="display: flex; justify-content: space-between; align-items: center;">
+      <div class="data-card selected" id="savedCard" onclick="toggleSelectCard()">
+        <div class="custom-check" id="checkIcon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+        <div class="data-body">
           <div class="data-title" id="savedTitle">Memuat data...</div>
-          <input type="checkbox" style="width: 18px; height: 18px; accent-color: var(--gold);">
+          <div class="data-sub" id="savedSubtitle">Mengambil accounts.json...</div>
+          <div class="badge-row" id="savedBadges"></div>
+          <div id="savedPrivateBadge"></div>
         </div>
-        <p style="font-size: 13px; color: var(--muted);" id="savedSubtitle">Sedang mengambil data dari server...</p>
-        <div class="badge-row" id="savedBadges"></div>
+        <div class="card-actions" onclick="event.stopPropagation()">
+          <button class="icon-action" title="Unduh TXT" onclick="downloadCurrentJsonTxt()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
+          <button class="icon-action" title="Hapus" onclick="hapusData()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+        </div>
       </div>
-      <button class="btn-primary" onclick="window.location.href='batch.html'">Buka data terpilih</button>
-      <button class="btn-danger" onclick="hapusData()">🗑 Hapus semua data</button>
+      <button class="btn-primary" id="btnOpenBatch" onclick="openSelectedBatch()">Buka data terpilih</button>
+      <button class="btn-danger" onclick="hapusData()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>Hapus semua data</button>
+      <div class="footer-hint">Ada akun yang negaranya "Unknown"? <a href="batch.html">Isi IP-nya di sini →</a></div>
     </div>
 
     <div id="tab-baru" class="tab-content">
-      <label style="font-size: 11px; color: var(--muted); font-weight: bold; letter-spacing: 1px;">NAMA DATA BARU (OPSIONAL)</label>
-      <input type="text" id="namaData" placeholder="misal: Order #17 · 17 Nov">
+      <div><label class="field-label">MASUKKAN KE</label><select class="select-box"><option value="new">Data baru</option><option value="existing">Gabung ke Data Checker</option></select></div>
+      <div><label class="field-label">NAMA DATA BARU (OPSIONAL)</label><input type="text" class="input-box" id="namaData" placeholder="misal: Order #17 · 17 Nov"></div>
       <div class="dropzone" onclick="document.getElementById('fileInput').click()">
-        <p style="font-size: 24px; margin-bottom: 10px;">📥</p>
-        <p style="font-weight: bold; color: #fff;">Tarik file .txt ke sini</p>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        <div style="font-weight: 700; color: #fff; font-size: 13.5px;">Tarik file .txt ke sini</div>
+        <div style="font-size: 11.5px; font-family: monospace;">atau <u style="color:#d4d4d8">pilih file</u> · format usn:pw:IP</div>
       </div>
       <input type="file" id="fileInput" style="display: none;" accept=".txt" onchange="handleFile(this)">
-      <textarea id="textInput" placeholder="Likali:pw123:103.150.60.10&#10;gori:pw456:8.8.8.8"></textarea>
-      <button class="btn-primary" style="background: var(--surface-2); border: 1px solid var(--border); color: var(--muted);" onclick="submitText()">Simpan Data Teks</button>
+      <textarea id="textInput" placeholder="Likali:pw123:103.150.60.10&#10;gori:pw456:8.8.8.8&#10;loko"></textarea>
+      <button class="btn-primary" onclick="submitText()">Simpan &amp; Buka Data Baru</button>
     </div>
 
     <div id="tab-pecah" class="tab-content">
-      <label style="font-size: 11px; color: var(--muted); font-weight: bold; letter-spacing: 1px;">TEMPEL ISI FILE</label>
-      <textarea id="textPecah" placeholder="Tempel data akun di sini..."></textarea>
+      <div><label class="field-label">TEMPEL ISI FILE (ATAU PILIH FILE DI BAWAH)</label><textarea id="textPecah" placeholder="Tempel daftar akun usn:pw:IP di sini..."></textarea></div>
       <input type="file" id="splitFileInput" style="display: none;" accept=".txt" onchange="handleSplitFile(this)">
-      <button class="btn-outline" style="width: 100%; padding: 15px;" onclick="document.getElementById('splitFileInput').click()">📄 Pilih File</button>
-      <label style="font-size: 11px; color: var(--muted); font-weight: bold; letter-spacing: 1px; margin-top: 10px;">JUMLAH AKUN PER BAGIAN</label>
-      <input type="text" id="limitPecah" value="2000">
+      <div class="file-picker-row" onclick="document.getElementById('splitFileInput').click()">
+        <span class="file-picker-badge">Pilih File</span><span id="splitFileName" style="font-size: 13px; color: var(--muted);">Tidak ada file yang dipilih</span>
+      </div>
+      <div style="width: 160px;"><label class="field-label">JUMLAH AKUN PER BAGIAN</label><input type="number" class="input-box" id="limitPecah" value="2000"></div>
       <button class="btn-primary" onclick="pecahFile()">Pecah sekarang</button>
     </div>
   </div>
 
   <script>
+    let isCardSelected = true;
+    let loadedAccounts = [];
+
     function switchTab(tabName, e) {
       document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
       document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-      if(e && e.target) e.target.classList.add('active');
+      if (e && e.target) e.target.classList.add('active');
       document.getElementById(`tab-${tabName}`).classList.add('active');
+    }
+
+    function toggleSelectCard() {
+      isCardSelected = !isCardSelected;
+      const card = document.getElementById('savedCard');
+      const check = document.getElementById('checkIcon');
+      const btn = document.getElementById('btnOpenBatch');
+      if (isCardSelected) {
+        card.classList.add('selected');
+        check.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+        btn.classList.remove('muted-btn');
+      } else {
+        card.classList.remove('selected');
+        check.innerHTML = '';
+        btn.classList.add('muted-btn');
+      }
+    }
+
+    function openSelectedBatch() {
+      if (!isCardSelected) { alert('Centang data terlebih dahulu untuk membukanya.'); return; }
+      window.location.href = 'batch.html';
     }
 
     async function loadAccountsData() {
       try {
         const res = await fetch('accounts.json?t=' + new Date().getTime());
         const data = await res.json();
-        let total = 0;
-        if (data.bagus) total += data.bagus.length;
-        if (data.biasa) total += data.biasa.length;
-        if (data.jelek) total += data.jelek.length;
+        const all = [...(data.bagus || []), ...(data.biasa || []), ...(data.jelek || [])];
+        loadedAccounts = all;
+        const total = all.length;
 
         if (total > 0) {
-          document.getElementById('savedTitle').innerText = "Data dari Checker.py";
-          document.getElementById('savedSubtitle').innerText = `${total} akun siap di-filter`;
-          document.getElementById('savedBadges').innerHTML = `<span class="badge gold">${total} AKUN</span><span class="badge" style="color: var(--green);">READY</span>`;
+          const korblox = all.filter(a => (a.limited_found || []).includes("Korblox Deathspeaker")).length;
+          const maliv = all.filter(a => (a.limited_found || []).includes("Malivinius")).length;
+          const mail = all.filter(a => a.has_verified).length;
+          const totalRap = all.reduce((sum, a) => sum + Number(a.total_rap || 0), 0);
+          const withIp = all.filter(a => a.ip && a.ip !== "-").length;
+          const priv = all.filter(a => a.is_private || a.rap_private).length;
+
+          document.getElementById('savedTitle').innerText = "Data Checker";
+          document.getElementById('savedSubtitle').innerHTML = `<strong>${total}</strong> akun &nbsp;<strong>${total}</strong> selesai`;
+          document.getElementById('savedBadges').innerHTML = `
+            ${korblox > 0 ? `<span class="badge k">K ${korblox}</span>` : ''}
+            ${maliv > 0 ? `<span class="badge maliv">MALIV ${maliv}</span>` : ''}
+            <span class="badge mail">MAIL ${mail}</span>
+            <span class="badge rap">RAP ${totalRap.toLocaleString()}</span>
+            <span class="badge">${withIp} IP</span>
+          `;
+          if (priv > 0) document.getElementById('savedPrivateBadge').innerHTML = `<span class="badge priv">${priv} privat</span>`;
         } else {
           document.getElementById('savedTitle').innerText = "Belum ada data";
-          document.getElementById('savedSubtitle').innerText = "Silakan upload file di tab Data Baru.";
+          document.getElementById('savedSubtitle').innerText = "Silakan upload file di tab Data baru.";
         }
       } catch (e) {
-        document.getElementById('savedTitle').innerText = "Belum ada data";
-        document.getElementById('savedSubtitle').innerText = "File accounts.json tidak ditemukan.";
+        document.getElementById('savedTitle').innerText = "Data Lokal / Offline";
+        document.getElementById('savedSubtitle').innerText = "accounts.json tidak ditemukan.";
       }
+    }
+
+    function downloadCurrentJsonTxt() {
+      if (!loadedAccounts.length) { alert("Tidak ada data untuk diunduh."); return; }
+      const txt = loadedAccounts.map(a => `${a.usn || ''}:${a.pass || ''}:${a.ip || ''}`).join('\n');
+      const blob = new Blob([txt], { type: "text/plain" });
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = "dyriee_accounts.txt"; a.click();
     }
 
     function handleFile(input) {
       const file = input.files[0];
       if (!file) return;
       const reader = new FileReader();
-      reader.onload = (e) => processTextData(e.target.result, true);
+      reader.onload = (e) => { document.getElementById('textInput').value = e.target.result; processTextData(e.target.result, true); };
       reader.readAsText(file);
     }
 
-    function submitText() {
-      const textData = document.getElementById('textInput').value;
-      processTextData(textData, false);
-    }
+    function submitText() { processTextData(document.getElementById('textInput').value, true); }
 
-    function processTextData(textData, isFileUpload) {
-      if (!textData.trim()) { alert("Data kosong!"); return; }
+    function processTextData(textData, redirect) {
+      if (!textData.trim()) { alert("Data masih kosong!"); return; }
       const lines = textData.split('\n').filter(l => l.trim() !== '');
+      const batchName = document.getElementById('namaData').value.trim() || `Data Baru (${lines.length})`;
       localStorage.setItem('dyriee_raw_data', textData);
+      localStorage.setItem('dyriee_batch_name', batchName);
       alert(`Berhasil menyimpan ${lines.length} akun secara lokal!`);
-      loadAccountsData();
-      if (isFileUpload) window.location.href = 'batch.html';
+      if (redirect) window.location.href = 'batch.html';
     }
 
     function hapusData() {
       if (confirm("Yakin mau hapus semua data lokal?")) {
         localStorage.removeItem('dyriee_raw_data');
+        localStorage.removeItem('dyriee_batch_name');
+        localStorage.removeItem('dyriee_statuses');
+        localStorage.removeItem('dyriee_stars');
         alert("Data lokal berhasil dihapus!");
         loadAccountsData();
       }
@@ -169,28 +273,23 @@
     function handleSplitFile(input) {
       const file = input.files[0];
       if (!file) return;
+      document.getElementById('splitFileName').innerText = file.name;
       const reader = new FileReader();
-      reader.onload = (e) => {
-        document.getElementById('textPecah').value = e.target.result;
-        alert("File berhasil dimuat ke kotak teks.");
-      };
+      reader.onload = (e) => { document.getElementById('textPecah').value = e.target.result; };
       reader.readAsText(file);
     }
 
     function pecahFile() {
       const textData = document.getElementById('textPecah').value;
       const limit = parseInt(document.getElementById('limitPecah').value) || 2000;
-      if (!textData.trim()) { alert("Tempel data dulu!"); return; }
+      if (!textData.trim()) { alert("Tempel atau pilih file data dulu!"); return; }
       const lines = textData.split('\n').filter(l => l.trim() !== '');
       const totalBagian = Math.ceil(lines.length / limit);
       alert(`Berhasil memecah ${lines.length} akun menjadi ${totalBagian} bagian.`);
       for (let i = 0; i < totalBagian; i++) {
         const chunk = lines.slice(i * limit, (i + 1) * limit).join('\n');
         const blob = new Blob([chunk], { type: "text/plain" });
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = `bagian_${i + 1}.txt`;
-        a.click();
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `bagian_${i + 1}.txt`; a.click();
       }
     }
 

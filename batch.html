@@ -4,133 +4,239 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Dyriee • Batch Filter</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <style>
-    :root { --bg: #0a0a0e; --surface: #14141a; --surface-2: #1e1e26; --border: rgba(255,255,255,0.08); --text: #f4f4f8; --muted: #8e8ea0; --gold: #f5d78e; --green: #10b981; --red: #ef4444; --blue: #3b82f6; }
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
-    body { background: var(--bg); color: var(--text); min-height: 100vh; padding-bottom: 80px; }
-    .header { position: sticky; top: 0; background: rgba(10,10,14,0.9); backdrop-filter: blur(10px); padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); z-index: 100; }
+    :root {
+      --bg: #0c0c0e; --surface: #151518; --surface-2: #1e1e23; --surface-3: #27272e;
+      --border: rgba(255, 255, 255, 0.08); --border-light: rgba(255, 255, 255, 0.14);
+      --text: #f4f4f6; --muted: #8a8a93; --cream: #f6e7b8;
+      --green: #22c55e; --red: #ef4444; --blue: #38bdf8; --purple: #a855f7; --amber: #f59e0b;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+    body { background-color: var(--bg); color: var(--text); min-height: 100vh; padding-bottom: 90px; }
+
+    .header { position: sticky; top: 0; background: rgba(12, 12, 14, 0.92); backdrop-filter: blur(12px); padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); z-index: 100; }
     .header-left { display: flex; align-items: center; gap: 10px; }
-    .back-btn { width: 36px; height: 36px; background: var(--surface-2); border-radius: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; border: none; color: #fff; }
-    .header-title { font-size: 14px; font-weight: bold; }
-    .container { padding: 15px; display: flex; flex-direction: column; gap: 15px; max-width: 600px; margin: 0 auto; }
-    .search-row { display: flex; gap: 10px; }
-    .search-input { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px 12px 12px 35px; color: #fff; font-size: 14px; }
-    .search-icon { position: absolute; margin-left: 10px; margin-top: 12px; color: var(--muted); }
-    .btn-filter { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px; color: #fff; cursor: pointer; }
-    .overview-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 15px; }
-    .overview-header { display: flex; justify-content: space-between; color: var(--muted); font-size: 11px; font-weight: bold; letter-spacing: 1px; cursor: pointer; }
-    .total-number { font-size: 40px; font-weight: 900; margin: 5px 0; }
-    .overview-sub { font-size: 12px; color: var(--muted); }
-    .detail-grid { display: none; flex-direction: column; gap: 10px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.05); margin-top: 10px; }
+    .icon-btn { width: 36px; height: 36px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--text); cursor: pointer; }
+    .brand-logo { width: 36px; height: 36px; background: var(--surface-2); border: 1px solid var(--border-light); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--cream); }
+    .header-meta h1 { font-size: 13px; font-weight: 800; line-height: 1.2; }
+    .header-meta p { font-size: 11px; color: var(--muted); font-family: monospace; margin-top: 2px; }
+    .header-right { display: flex; align-items: center; gap: 6px; }
+    .pill-tag { background: var(--surface); border: 1px solid var(--border); padding: 6px 10px; border-radius: 99px; font-size: 11.5px; font-weight: 600; color: var(--muted); display: inline-flex; align-items: center; gap: 5px; }
+    .pill-tag.cream { background: rgba(246, 231, 184, 0.14); border-color: rgba(246, 231, 184, 0.35); color: var(--cream); }
+
+    .container { padding: 16px; display: flex; flex-direction: column; gap: 14px; max-width: 540px; margin: 0 auto; }
+    .search-row { display: flex; gap: 8px; position: relative; }
+    .search-wrap { position: relative; flex: 1; }
+    .search-icon { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); color: var(--muted); pointer-events: none; }
+    .search-input { width: 100%; background: var(--surface); border: 1px solid var(--border-light); border-radius: 12px; padding: 12px 12px 12px 38px; color: #fff; font-size: 13.5px; outline: none; }
+    .sq-btn { width: 44px; height: 44px; background: var(--surface); border: 1px solid var(--border-light); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: var(--text); cursor: pointer; flex-shrink: 0; }
+
+    .export-popover { position: absolute; top: 52px; right: 0; width: 280px; background: #18181c; border: 1px solid var(--border-light); border-radius: 16px; padding: 14px; box-shadow: 0 20px 40px rgba(0,0,0,0.7); z-index: 200; display: none; flex-direction: column; gap: 12px; }
+    .export-popover.open { display: flex; }
+    .pop-label { font-size: 10.5px; font-weight: 700; color: var(--muted); letter-spacing: 1px; }
+    .scope-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .scope-btn { background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px; padding: 10px; text-align: left; color: var(--muted); font-size: 12px; font-weight: 600; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+    .scope-btn.active { background: var(--cream); border-color: var(--cream); color: #111; font-weight: 700; }
+    .export-option { display: flex; align-items: flex-start; gap: 12px; padding: 8px 6px; border-radius: 10px; cursor: pointer; text-align: left; background: none; border: none; color: #fff; }
+    .export-option:hover { background: var(--surface-2); }
+    .export-option-title { font-size: 13px; font-weight: 700; }
+    .export-option-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+    .overview-card { background: linear-gradient(145deg, #1b1822 0%, #141417 65%); border: 1px solid var(--border-light); border-radius: 18px; padding: 16px; }
+    .overview-top { display: flex; justify-content: space-between; align-items: center; }
+    .ov-pill { background: rgba(255,255,255,0.06); border: 1px solid var(--border); padding: 5px 10px; border-radius: 8px; font-size: 11px; font-weight: 700; color: #d4d4d8; letter-spacing: 0.8px; display: inline-flex; align-items: center; gap: 6px; }
+    .detail-toggle { background: rgba(255,255,255,0.05); border: 1px solid var(--border); padding: 5px 11px; border-radius: 8px; font-size: 11px; font-weight: 700; color: var(--muted); cursor: pointer; }
+    .ov-sub-label { font-size: 11px; font-weight: 700; color: var(--muted); letter-spacing: 1px; margin-top: 14px; }
+    .total-number { font-size: 46px; font-weight: 900; line-height: 1.05; margin: 4px 0 6px; letter-spacing: -1px; }
+    .overview-sub { font-size: 13px; color: var(--muted); }
+
+    .detail-grid { display: none; flex-direction: column; gap: 10px; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--border); }
     .detail-grid.open { display: flex; }
-    .metric-row { display: flex; justify-content: space-between; font-size: 13px; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
-    .metric-row:last-child { border-bottom: none; }
-    .metric-label { color: var(--muted); }
-    .metric-val { font-weight: bold; }
-    .filter-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 15px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; margin-bottom: 10px; }
-    .filter-title { font-size: 12px; font-weight: bold; color: var(--muted); text-transform: uppercase; }
-    .filter-badge { background: var(--surface-2); padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: bold; }
-    .status-tabs { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 5px; scrollbar-width: none; }
+    .rap-highlight-box { background: linear-gradient(135deg, rgba(246, 231, 184, 0.16) 0%, rgba(28, 26, 22, 0.9) 100%); border: 1px solid rgba(246, 231, 184, 0.28); border-radius: 14px; padding: 14px; display: flex; align-items: center; gap: 14px; }
+    .rap-icon-box { width: 44px; height: 44px; background: rgba(246, 231, 184, 0.15); border: 1px solid rgba(246, 231, 184, 0.3); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: var(--cream); flex-shrink: 0; }
+    .metrics-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .metric-box { background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border); border-radius: 14px; padding: 12px; display: flex; align-items: center; gap: 12px; }
+    .m-icon { width: 38px; height: 38px; border-radius: 10px; background: var(--surface-2); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .m-label { font-size: 10px; font-weight: 700; color: var(--muted); letter-spacing: 0.8px; }
+    .m-val { font-size: 20px; font-weight: 800; margin-top: 2px; }
+
+    .accordion-wrap { display: flex; flex-direction: column; gap: 8px; }
+    .filter-header-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 2px; cursor: pointer; }
+    .filter-title { font-size: 11.5px; font-weight: 700; color: var(--muted); letter-spacing: 0.8px; display: flex; align-items: center; gap: 8px; }
+    .filter-badge { background: var(--surface); border: 1px solid var(--border); padding: 4px 9px; border-radius: 7px; font-size: 11px; font-weight: 700; color: var(--muted); display: inline-flex; align-items: center; gap: 6px; }
+
+    .accordion-panel { display: none; background: var(--surface); border: 1px solid var(--border-light); border-radius: 14px; padding: 8px; flex-direction: column; gap: 4px; max-height: 290px; overflow-y: auto; }
+    .accordion-panel.open { display: flex; }
+    .panel-search { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; color: #fff; font-size: 13px; margin-bottom: 6px; outline: none; }
+
+    .list-bar-item { position: relative; padding: 11px 12px; border-radius: 9px; display: flex; justify-content: space-between; align-items: center; font-size: 13px; font-weight: 500; cursor: pointer; overflow: hidden; color: #e4e4e7; }
+    .list-bar-bg { position: absolute; left: 0; top: 0; bottom: 0; background: rgba(255, 255, 255, 0.05); z-index: 0; pointer-events: none; }
+    .list-bar-item.active { background: #e4e4e7; color: #111; font-weight: 700; }
+    .list-bar-item span { position: relative; z-index: 1; }
+
+    .status-tabs { display: flex; gap: 8px; overflow-x: auto; padding: 4px 0; scrollbar-width: none; }
     .status-tabs::-webkit-scrollbar { display: none; }
-    .status-tab { padding: 8px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 20px; font-size: 13px; font-weight: bold; white-space: nowrap; cursor: pointer; color: var(--muted); }
-    .status-tab.active { background: var(--gold); color: #000; border-color: var(--gold); }
-    .acc-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 15px; display: flex; flex-direction: column; gap: 12px; position: relative; margin-bottom: 15px; }
-    .acc-top { display: flex; gap: 15px; }
-    .acc-avatar { width: 80px; height: 80px; border-radius: 12px; background: var(--surface-2); object-fit: cover; }
-    .acc-info { flex: 1; display: flex; flex-direction: column; gap: 4px; }
-    .acc-name { font-size: 16px; font-weight: bold; }
-    .acc-usn { font-size: 13px; color: var(--muted); }
-    .acc-details { display: flex; gap: 10px; font-size: 12px; color: var(--muted); align-items: center; margin-top: 2px; flex-wrap: wrap; }
-    .star-btn { position: absolute; top: 15px; right: 15px; background: transparent; border: none; color: var(--muted); font-size: 20px; cursor: pointer; }
-    .acc-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
-    .btn-copy { background: #fff; color: #000; border: none; padding: 12px; border-radius: 10px; font-weight: bold; font-size: 13px; cursor: pointer; }
-    .btn-copy.pw { background: var(--surface-2); color: #fff; border: 1px solid var(--border); }
-    .status-actions { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 5px; }
-    .btn-status { background: var(--surface-2); border: 1px solid var(--border); color: var(--muted); padding: 8px; border-radius: 8px; font-size: 11px; font-weight: bold; cursor: pointer; text-align: center; }
-    .btn-status.active-valid { color: var(--green); border-color: var(--green); }
-    .btn-status.active-invalid { color: var(--red); border-color: var(--red); }
-    .btn-status.active-secure { color: var(--blue); border-color: var(--blue); }
-    .btn-status.active-cross { color: var(--gold); border-color: var(--gold); }
-    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 999; display: none; align-items: flex-end; }
+    .status-tab { padding: 8px 14px; background: transparent; border: 1px solid transparent; border-radius: 99px; font-size: 13px; font-weight: 600; white-space: nowrap; cursor: pointer; color: var(--muted); display: inline-flex; align-items: center; gap: 6px; }
+    .status-tab .cnt { background: var(--surface-2); color: var(--muted); padding: 2px 7px; border-radius: 99px; font-size: 11px; font-weight: 700; }
+    .status-tab.active { background: var(--cream); color: #111; font-weight: 700; }
+    .status-tab.active .cnt { background: rgba(0,0,0,0.14); color: #111; }
+
+    .acc-card { background: var(--surface); border: 1px solid var(--border-light); border-radius: 18px; padding: 15px; display: flex; flex-direction: column; gap: 14px; position: relative; margin-bottom: 12px; }
+    .acc-top { display: flex; gap: 14px; align-items: flex-start; }
+    .acc-avatar { width: 78px; height: 78px; border-radius: 14px; background: var(--surface-2); border: 1px solid var(--border); object-fit: cover; flex-shrink: 0; }
+    .acc-info { flex: 1; min-width: 0; padding-right: 34px; }
+    .acc-name { font-size: 16px; font-weight: 800; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .acc-usn { font-size: 13px; color: var(--muted); font-family: monospace; margin-top: 2px; }
+    .acc-details { display: flex; gap: 8px; font-size: 12px; color: #d4d4d8; align-items: center; margin-top: 8px; flex-wrap: wrap; font-family: monospace; }
+    .mail-pill { display: inline-block; margin-top: 8px; background: #4ade80; color: #052e16; padding: 2px 8px; border-radius: 5px; font-size: 10.5px; font-weight: 800; letter-spacing: 0.5px; }
+    .star-btn { position: absolute; top: 14px; right: 14px; width: 34px; height: 34px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px; color: var(--muted); font-size: 16px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+    .star-btn.starred { color: #facc15; border-color: rgba(250, 204, 21, 0.4); }
+
+    .acc-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .btn-copy { background: #f4f4f6; color: #111; border: none; padding: 12px; border-radius: 99px; font-weight: 700; font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 7px; }
+    .btn-copy.pw { background: var(--surface-2); color: #fff; border: 1px solid var(--border-light); }
+
+    .status-actions { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+    .btn-status { background: var(--surface-2); border: 1px solid var(--border); color: var(--muted); padding: 8px 4px; border-radius: 10px; font-size: 10.5px; font-weight: 700; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .btn-status.active-valid { color: var(--green); border-color: var(--green); background: rgba(34,197,94,0.1); }
+    .btn-status.active-invalid { color: var(--red); border-color: var(--red); background: rgba(239,68,68,0.1); }
+    .btn-status.active-secure { color: var(--blue); border-color: var(--blue); background: rgba(56,189,248,0.1); }
+    .btn-status.active-cross { color: var(--amber); border-color: var(--amber); background: rgba(245,158,11,0.1); }
+
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.78); backdrop-filter: blur(4px); z-index: 999; display: none; align-items: flex-end; }
     .modal-overlay.active { display: flex; }
-    .modal-content { background: var(--surface); width: 100%; border-radius: 20px 20px 0 0; padding: 20px; max-height: 80vh; overflow-y: auto; }
-    .modal-header { text-align: center; font-weight: bold; margin-bottom: 20px; }
-    .modal-section { margin-bottom: 20px; }
-    .modal-section h4 { font-size: 11px; color: var(--muted); margin-bottom: 10px; font-weight: bold; letter-spacing: 1px; }
+    .modal-content { background: #18181c; border-top: 1px solid var(--border-light); width: 100%; max-width: 540px; margin: 0 auto; border-radius: 24px 24px 0 0; padding: 14px 20px 28px; max-height: 85vh; overflow-y: auto; }
+    .drag-handle { width: 38px; height: 4px; background: rgba(255,255,255,0.2); border-radius: 99px; margin: 0 auto 14px; }
+    .modal-header { text-align: center; font-size: 16px; font-weight: 800; margin-bottom: 18px; }
+    .modal-section { margin-bottom: 18px; }
+    .modal-section h4 { font-size: 10.5px; color: var(--muted); margin-bottom: 10px; font-weight: 700; letter-spacing: 1px; }
     .chip-group { display: flex; flex-wrap: wrap; gap: 8px; }
-    .chip { background: var(--surface-2); border: 1px solid var(--border); padding: 8px 12px; border-radius: 20px; font-size: 12px; cursor: pointer; color: var(--muted); }
-    .chip.active { background: #fff; color: #000; border-color: #fff; }
-    .btn-apply { background: #fff; color: #000; border: none; padding: 15px; border-radius: 12px; font-weight: bold; width: 100%; cursor: pointer; }
+    .chip { background: var(--surface-2); border: 1px solid var(--border); padding: 8px 14px; border-radius: 99px; font-size: 12.5px; font-weight: 600; cursor: pointer; color: #d4d4d8; }
+    .chip.active { background: #f4f4f6; color: #111; border-color: #f4f4f6; font-weight: 700; }
+    .btn-apply { background: #f4f4f6; color: #111; border: none; padding: 15px; border-radius: 13px; font-weight: 700; font-size: 14px; width: 100%; cursor: pointer; margin-top: 6px; }
+
+    .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #f4f4f6; color: #111; padding: 10px 18px; border-radius: 99px; font-size: 13px; font-weight: 700; box-shadow: 0 10px 25px rgba(0,0,0,0.5); opacity: 0; pointer-events: none; transition: opacity 0.2s; z-index: 2000; }
+    .toast.show { opacity: 1; }
   </style>
 </head>
 <body>
   <header class="header">
     <div class="header-left">
-      <button class="back-btn" onclick="window.location.href='index.html'">←</button>
-      <div class="header-title" id="headerTitle">Data</div>
+      <button class="icon-btn" onclick="window.location.href='index.html'" title="Kembali">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+      </button>
+      <div class="brand-logo">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+      </div>
+      <div class="header-meta"><h1>Dyriee</h1><p id="headerTitle">Data Checker</p></div>
     </div>
     <div class="header-right">
-      <span style="font-size: 12px; background: var(--gold); color:#000; padding: 4px 8px; border-radius: 10px; font-weight: bold;">Tersimpan</span>
+      <span class="pill-tag">👤 Dyriee</span>
+      <span class="pill-tag cream">Tersimpan</span>
     </div>
   </header>
 
   <div class="container">
     <div class="search-row">
-      <div style="position: relative; flex: 1;">
-        <span class="search-icon">🔍</span>
+      <div class="search-wrap">
+        <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         <input type="text" class="search-input" id="searchInput" placeholder="Cari username, IP, item..." oninput="renderList()">
       </div>
-      <button class="btn-filter" onclick="openFilterModal()">☰</button>
+      <button class="sq-btn" onclick="openFilterModal()" title="Filter Lanjutan">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="7" y1="12" x2="17" y2="12"/><line x1="10" y1="18" x2="14" y2="18"/></svg>
+      </button>
+      <button class="sq-btn" onclick="toggleExportMenu(event)" title="Ekspor Data">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      </button>
+
+      <div class="export-popover" id="exportPopover" onclick="event.stopPropagation()">
+        <div class="pop-label">AMBIL DARI MANA?</div>
+        <div class="scope-grid">
+          <button class="scope-btn active" data-scope="shown" onclick="setExportScope('shown', this)"><span>Yang tampil</span> <span id="exp-cnt-shown">0</span></button>
+          <button class="scope-btn" data-scope="all" onclick="setExportScope('all', this)"><span>Semua</span> <span id="exp-cnt-all">0</span></button>
+          <button class="scope-btn" data-scope="valid" onclick="setExportScope('valid', this)"><span>Valid</span> <span id="exp-cnt-valid">0</span></button>
+          <button class="scope-btn" data-scope="invalid" onclick="setExportScope('invalid', this)"><span>Invalid</span> <span id="exp-cnt-invalid">0</span></button>
+        </div>
+        <button class="export-option" onclick="exportData('csv')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" style="margin-top:2px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          <div><div class="export-option-title">CSV Lengkap</div><div class="export-option-sub">Semua kolom, Excel-ready</div></div>
+        </button>
+        <button class="export-option" onclick="exportData('txt')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" style="margin-top:2px;"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+          <div><div class="export-option-title">Download TXT</div><div class="export-option-sub">usn:pw:IP — satu per baris</div></div>
+        </button>
+        <button class="export-option" onclick="exportData('fav')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" style="margin-top:2px;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          <div><div class="export-option-title">Favorit saja</div><div class="export-option-sub">USN dari akun berbintang</div></div>
+        </button>
+      </div>
     </div>
 
     <div class="overview-card">
-      <div class="overview-header" onclick="toggleDetail()">
-        <span>📊 OVERVIEW</span>
-        <span id="detailBtn">DETAIL ⌄</span>
+      <div class="overview-top">
+        <div class="ov-pill">📊 OVERVIEW</div>
+        <button class="detail-toggle" id="detailBtn" onclick="toggleDetail()">DETAIL ⌄</button>
       </div>
+      <div class="ov-sub-label">TOTAL AKUN</div>
       <div class="total-number" id="statTotal">0</div>
-      <div class="overview-sub" id="statSub">0 dicek · 0 belum</div>
-      
+      <div class="overview-sub" id="statSub">0 dicek · 0 belum · 0 private</div>
+
       <div class="detail-grid" id="detailGrid">
-        <div class="metric-row"><span class="metric-label">Total RAP</span><span class="metric-val" id="statTotalRap" style="color: var(--gold);">0</span></div>
-        <div class="metric-row"><span class="metric-label">Valid</span><span class="metric-val" id="statValidDetail" style="color: var(--green);">0</span></div>
-        <div class="metric-row"><span class="metric-label">Invalid</span><span class="metric-val" id="statInvalidDetail" style="color: var(--red);">0</span></div>
-        <div class="metric-row"><span class="metric-label">Secure</span><span class="metric-val" id="statSecureDetail" style="color: var(--blue);">0</span></div>
-        <div class="metric-row"><span class="metric-label">Cross</span><span class="metric-val" id="statCrossDetail" style="color: var(--gold);">0</span></div>
-        <div class="metric-row"><span class="metric-label">Headless</span><span class="metric-val" id="statHeadless" style="color: #fbbf24;">0</span></div>
-        <div class="metric-row"><span class="metric-label">Korblox</span><span class="metric-val" id="statKorblox" style="color: #a855f7;">0</span></div>
-        <div class="metric-row"><span class="metric-label">Malivinius</span><span class="metric-val" id="statMalivinius" style="color: #38bdf8;">0</span></div>
-        <div class="metric-row"><span class="metric-label">Has Mail</span><span class="metric-val" id="statHasMail" style="color: var(--green);">0</span></div>
+        <div class="rap-highlight-box">
+          <div class="rap-icon-box"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg></div>
+          <div><div class="m-label">TOTAL RAP</div><div style="font-size:26px; font-weight:900; color:#fff; margin-top:2px;" id="statTotalRap">0</div><div style="font-size:11px; color:var(--muted); font-family:monospace; margin-top:2px;">akumulasi terbatas dari batch ini</div></div>
+        </div>
+        <div class="metrics-2col">
+          <div class="metric-box"><div class="m-icon" style="color:var(--green);">✓</div><div><div class="m-label">VALID</div><div class="m-val" id="statValidDetail" style="color:var(--green);">0</div></div></div>
+          <div class="metric-box"><div class="m-icon" style="color:var(--red);">✕</div><div><div class="m-label">INVALID</div><div class="m-val" id="statInvalidDetail" style="color:var(--red);">0</div></div></div>
+          <div class="metric-box"><div class="m-icon" style="color:var(--blue);">🛡</div><div><div class="m-label">SECURE</div><div class="m-val" id="statSecureDetail" style="color:var(--blue);">0</div></div></div>
+          <div class="metric-box"><div class="m-icon" style="color:var(--amber);">⚠</div><div><div class="m-label">CROSS</div><div class="m-val" id="statCrossDetail" style="color:var(--amber);">0</div></div></div>
+          <div class="metric-box"><div class="m-icon" style="color:#fbbf24;">👤</div><div><div class="m-label">HEADLESS</div><div class="m-val" id="statHeadless">0</div></div></div>
+          <div class="metric-box"><div class="m-icon" style="color:var(--purple);">🦴</div><div><div class="m-label">KORBLOX</div><div class="m-val" id="statKorblox">0</div></div></div>
+          <div class="metric-box"><div class="m-icon" style="color:var(--blue);">💎</div><div><div class="m-label">MALIVINIUS</div><div class="m-val" id="statMalivinius">0</div></div></div>
+          <div class="metric-box"><div class="m-icon" style="color:var(--green);">✉</div><div><div class="m-label">HAS MAIL</div><div class="m-val" id="statHasMail">0</div></div></div>
+        </div>
       </div>
     </div>
 
-    <div class="filter-card" onclick="openCountryModal()">
-      <div class="filter-title">📍 FILTER NEGARA</div>
-      <div class="filter-badge" id="countryBadge">0 NEGARA ›</div>
+    <div class="accordion-wrap">
+      <div class="filter-header-row" onclick="toggleAccordion('countryPanel', 'countryArrow')">
+        <div class="filter-title">📍 FILTER NEGARA</div>
+        <div class="filter-badge"><span id="countryBadge">0 NEGARA</span> <span id="countryArrow">›</span></div>
+      </div>
+      <div class="accordion-panel" id="countryPanel"></div>
     </div>
-    <div class="filter-card" onclick="openItemModal()">
-      <div class="filter-title">◎ FILTER ITEM RAP</div>
-      <div class="filter-badge" id="itemBadge">0 ITEM ›</div>
+
+    <div class="accordion-wrap">
+      <div class="filter-header-row" onclick="toggleAccordion('itemPanel', 'itemArrow')">
+        <div class="filter-title">◎ FILTER ITEM RAP</div>
+        <div class="filter-badge"><span id="itemBadge">0 ITEM</span> <span id="itemArrow">›</span></div>
+      </div>
+      <div class="accordion-panel" id="itemPanel">
+        <input type="text" class="panel-search" id="itemSearchInput" placeholder="Cari item..." oninput="renderItemAccordion()">
+        <div id="itemListContainer" style="display:flex; flex-direction:column; gap:4px;"></div>
+      </div>
     </div>
 
     <div class="status-tabs">
-      <div class="status-tab active" onclick="setTab('active', event)">Active <span style="background: rgba(0,0,0,0.1); padding: 2px 6px; border-radius: 10px;" id="cnt-active">0</span></div>
-      <div class="status-tab" onclick="setTab('valid', event)">Valid <span id="cnt-valid">0</span></div>
-      <div class="status-tab" onclick="setTab('invalid', event)">Invalid <span id="cnt-invalid">0</span></div>
-      <div class="status-tab" onclick="setTab('secure', event)">Secure <span id="cnt-secure">0</span></div>
-      <div class="status-tab" onclick="setTab('cross', event)">Cross <span id="cnt-cross">0</span></div>
+      <div class="status-tab active" onclick="setTab('active', event)">Active <span class="cnt" id="cnt-active">0</span></div>
+      <div class="status-tab" onclick="setTab('valid', event)">Valid <span class="cnt" id="cnt-valid">0</span></div>
+      <div class="status-tab" onclick="setTab('invalid', event)">Invalid <span class="cnt" id="cnt-invalid">0</span></div>
+      <div class="status-tab" onclick="setTab('secure', event)">Secure <span class="cnt" id="cnt-secure">0</span></div>
+      <div class="status-tab" onclick="setTab('cross', event)">Cross <span class="cnt" id="cnt-cross">0</span></div>
     </div>
 
     <div id="accList"></div>
   </div>
 
-  <div class="modal-overlay" id="filterModal">
-    <div class="modal-content">
+  <div class="modal-overlay" id="filterModal" onclick="closeFilterModal()">
+    <div class="modal-content" onclick="event.stopPropagation()">
+      <div class="drag-handle"></div>
       <div class="modal-header">Filters</div>
       <div class="modal-section">
         <h4>URUTKAN</h4>
-        <select id="sortOrder" onchange="renderList()" style="width: 100%; padding: 10px; background: var(--surface-2); color: #fff; border: 1px solid var(--border); border-radius: 8px;">
+        <select id="sortOrder" onchange="renderList()" style="width: 100%; padding: 12px; background: var(--surface-2); color: #fff; border: 1px solid var(--border-light); border-radius: 11px; font-size: 13.5px; outline: none;">
           <option value="default">Original order</option>
           <option value="rap_desc">RAP Tertinggi</option>
           <option value="rap_asc">RAP Terendah</option>
@@ -140,82 +246,94 @@
         <h4>TAMPILKAN</h4>
         <div class="chip-group" id="filterChips">
           <div class="chip active" data-filter="all">Semua</div>
+          <div class="chip" data-filter="avatar">Dengan avatar</div>
           <div class="chip" data-filter="ip">Dengan IP</div>
-          <div class="chip" data-filter="headless">Headless</div>
-          <div class="chip" data-filter="korblox">Korblox</div>
-          <div class="chip" data-filter="malivinius">Malivinius</div>
-          <div class="chip" data-filter="has_verified">Has Mail</div>
+          <div class="chip" data-filter="rap_private">RAP private</div>
+          <div class="chip" data-filter="secure">Secure</div>
+          <div class="chip" data-filter="cross">Cross</div>
+        </div>
+      </div>
+      <div class="modal-section">
+        <h4>BUNDLE</h4>
+        <div class="chip-group" id="bundleChips">
+          <div class="chip active" data-bundle="all">Semua</div>
+          <div class="chip" data-bundle="headless">Headless</div>
+          <div class="chip" data-bundle="korblox">Korblox</div>
+          <div class="chip" data-bundle="malivinius">Malivinius</div>
+          <div class="chip" data-bundle="has_verified">Has Mail</div>
+          <div class="chip" data-bundle="has_limited">Item Limited</div>
+        </div>
+      </div>
+      <div class="modal-section">
+        <h4>STATUS</h4>
+        <div class="chip-group" id="statusFilterChips">
+          <div class="chip active" data-st="all">Semua</div>
+          <div class="chip" data-st="starred">Favorit (★)</div>
         </div>
       </div>
       <button class="btn-apply" onclick="closeFilterModal()">Terapkan</button>
     </div>
   </div>
 
-  <div class="modal-overlay" id="countryModal">
-    <div class="modal-content">
-      <div class="modal-header">Pilih Negara</div>
-      <div class="chip-group" id="countryChips" style="max-height: 50vh; overflow-y: auto;"></div>
-      <button class="btn-apply" style="margin-top: 20px;" onclick="closeCountryModal()">Tutup</button>
-    </div>
-  </div>
-
-  <div class="modal-overlay" id="itemModal">
-    <div class="modal-content">
-      <div class="modal-header">Filter Item RAP</div>
-      <div class="chip-group" id="itemChips" style="max-height: 50vh; overflow-y: auto;"></div>
-      <button class="btn-apply" style="margin-top: 20px;" onclick="closeItemModal()">Tutup</button>
-    </div>
-  </div>
+  <div class="toast" id="toast">Tersalin!</div>
 
   <script>
     let rawData = [];
+    let currentFilteredData = [];
     let currentTab = 'active';
-    let localStatuses = {};
-    let currentFilter = 'all';
-    let currentCountry = 'all';
-    let currentItem = 'all';
+    let localStatuses = JSON.parse(localStorage.getItem('dyriee_statuses') || '{}');
+    let localStars = JSON.parse(localStorage.getItem('dyriee_stars') || '{}');
+    let currentFilter = 'all', currentBundle = 'all', currentStatusChip = 'all', currentCountry = 'all', currentItem = 'all', exportScope = 'shown';
+    const DEFAULT_AVATAR = "https://tr.rbxcdn.com/30DAY-AvatarHeadshot-A4F764CB5B7A62140A826DCBA9EE5F7E-Png/150/150/AvatarHeadshot/Webp/noFilter";
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.innerText = msg; t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 1800);
+    }
 
     async function loadAccountsData() {
       try {
         const res = await fetch('accounts.json?t=' + new Date().getTime());
         const json = await res.json();
-        
         const bagus = (json.bagus || []).map(a => ({ ...a, category: 'bagus' }));
         const biasa = (json.biasa || []).map(a => ({ ...a, category: 'biasa' }));
         const jelek = (json.jelek || []).map(a => ({ ...a, category: 'jelek' }));
         const all = [...bagus, ...biasa, ...jelek];
-        
-        rawData = all.map((item, index) => ({
-          id: index,
-          usn: item.usn || "Unknown",
-          pw: item.pass || "-",
-          ip: item.ip || "-",
-          country: (item.location || "Unknown").split("(")[0].trim(),
-          rap: Number(item.total_rap || 0),
-          avatar: item.avatar_url || "https://tr.rbxcdn.com/30DAY-AvatarHeadshot-A4F764CB5B7A62140A826DCBA9EE5F7E-Png/150/150/AvatarHeadshot/Webp/noFilter",
-          headless: (item.limited_found || []).includes("Headless Horseman"),
-          korblox: (item.limited_found || []).includes("Korblox Deathspeaker"),
-          malivinius: (item.limited_found || []).includes("Malivinius"),
-          has_verified: item.has_verified || false,
-          hasIP: item.ip && item.ip !== "-",
-          status: 'active'
-        }));
-
-        renderStats();
-        renderList();
-        document.getElementById('headerTitle').innerText = "Data Checker (" + rawData.length + ")";
-
-        // Otomatis cek negara kalau "Unknown"
-        rawData.forEach(acc => {
-          if (acc.country === "Unknown" && acc.ip && acc.ip !== "-") {
-            fetchCountryForIP(acc.ip, acc.id);
-          }
+        rawData = all.map((item, index) => {
+          const limiteds = item.limited_found || [];
+          return {
+            id: index, usn: item.usn || "Unknown", pw: item.pass || "-", ip: item.ip || "-",
+            country: (item.location || "Unknown").split("(")[0].trim(), rap: Number(item.total_rap || 0),
+            avatar: item.avatar_url || DEFAULT_AVATAR, hasCustomAvatar: Boolean(item.avatar_url),
+            limiteds: limiteds, headless: limiteds.includes("Headless Horseman"),
+            korblox: limiteds.includes("Korblox Deathspeaker"), malivinius: limiteds.includes("Malivinius"),
+            has_verified: Boolean(item.has_verified), isPrivate: Boolean(item.is_private || item.rap_private),
+            hasIP: Boolean(item.ip && item.ip !== "-")
+          };
         });
-
-      } catch(e) {
-        console.error("Gagal load accounts.json", e);
-        document.getElementById('accList').innerHTML = `<div style="text-align:center; padding: 20px; color: var(--muted);">Gagal memuat accounts.json.</div>`;
+        initUI();
+        rawData.forEach(acc => { if (acc.country === "Unknown" && acc.hasIP) fetchCountryForIP(acc.ip, acc.id); });
+      } catch (e) {
+        const savedRaw = localStorage.getItem('dyriee_raw_data');
+        if (savedRaw) {
+          const lines = savedRaw.split('\n').filter(l => l.trim() !== '');
+          rawData = lines.map((line, idx) => {
+            const parts = line.trim().split(':');
+            return { id: idx, usn: parts[0] || "Unknown", pw: parts[1] || "-", ip: parts[2] || "-", country: "Unknown", rap: 0, avatar: DEFAULT_AVATAR, hasCustomAvatar: false, limiteds: [], headless: false, korblox: false, malivinius: false, has_verified: false, isPrivate: false, hasIP: Boolean(parts[2] && parts[2] !== "-") };
+          });
+          document.getElementById('headerTitle').innerText = localStorage.getItem('dyriee_batch_name') || `Data Lokal (${rawData.length})`;
+          initUI();
+          rawData.forEach(acc => { if (acc.hasIP) fetchCountryForIP(acc.ip, acc.id); });
+        } else {
+          document.getElementById('accList').innerHTML = `<div style="text-align:center; padding: 30px; color: var(--muted);">Gagal memuat accounts.json.</div>`;
+        }
       }
+    }
+
+    function initUI() {
+      renderStats(); renderCountryAccordion(); renderItemAccordion(); renderList();
+      if (!localStorage.getItem('dyriee_batch_name')) document.getElementById('headerTitle').innerText = `Data Checker (${rawData.length})`;
     }
 
     async function fetchCountryForIP(ip, id) {
@@ -224,89 +342,110 @@
         const data = await res.json();
         if (data.success) {
           const acc = rawData.find(a => a.id === id);
-          if (acc) {
-            acc.country = data.country;
-            renderList();
-            renderStats();
-          }
+          if (acc) { acc.country = data.country; renderStats(); renderCountryAccordion(); renderList(); }
         }
-      } catch(e) {}
+      } catch (e) {}
     }
 
     function toggleDetail() {
       const grid = document.getElementById('detailGrid');
       const btn = document.getElementById('detailBtn');
-      if (grid.classList.contains('open')) {
-        grid.classList.remove('open');
-        btn.innerText = "DETAIL ⌄";
-      } else {
-        grid.classList.add('open');
-        btn.innerText = "TUTUP ⌃";
-      }
+      grid.classList.toggle('open');
+      btn.innerText = grid.classList.contains('open') ? "TUTUP ⌃" : "DETAIL ⌄";
+    }
+
+    function toggleAccordion(panelId, arrowId) {
+      const panel = document.getElementById(panelId);
+      const arrow = document.getElementById(arrowId);
+      const isOpen = panel.classList.toggle('open');
+      arrow.innerText = isOpen ? "⌄" : "›";
+    }
+
+    function renderCountryAccordion() {
+      const panel = document.getElementById('countryPanel');
+      const counts = {};
+      rawData.forEach(a => { const c = a.country || "Unknown"; counts[c] = (counts[c] || 0) + 1; });
+      const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+      const maxCount = sorted.length ? sorted[0][1] : 1;
+      document.getElementById('countryBadge').innerText = `${sorted.length} NEGARA`;
+      let html = `<div class="list-bar-item ${currentCountry === 'all' ? 'active' : ''}" onclick="setCountry('all')"><span>Semua Negara</span><span>${rawData.length}</span></div>`;
+      sorted.forEach(([country, cnt]) => {
+        const pct = Math.round((cnt / maxCount) * 100);
+        html += `<div class="list-bar-item ${currentCountry === country ? 'active' : ''}" onclick="setCountry('${country.replace(/'/g, "\\'")}')"><div class="list-bar-bg" style="width:${pct}%"></div><span>${country}</span><span style="font-family:monospace;font-weight:700;">${cnt}</span></div>`;
+      });
+      panel.innerHTML = html;
+    }
+
+    function setCountry(c) { currentCountry = c; renderCountryAccordion(); renderList(); }
+
+    function renderItemAccordion() {
+      const q = (document.getElementById('itemSearchInput')?.value || '').toLowerCase();
+      const container = document.getElementById('itemListContainer');
+      const itemCounts = {};
+      rawData.forEach(a => { (a.limiteds || []).forEach(it => { itemCounts[it] = (itemCounts[it] || 0) + 1; }); });
+      const allItems = Object.entries(itemCounts).sort((a, b) => b[1] - a[1]);
+      document.getElementById('itemBadge').innerText = `${allItems.length} ITEM`;
+      const filteredItems = allItems.filter(([name]) => name.toLowerCase().includes(q));
+      let html = `<div class="list-bar-item ${currentItem === 'all' ? 'active' : ''}" onclick="setItem('all')"><span>Semua Item</span><span>${rawData.length}</span></div>`;
+      filteredItems.forEach(([name, cnt]) => {
+        html += `<div class="list-bar-item ${currentItem === name ? 'active' : ''}" onclick="setItem('${name.replace(/'/g, "\\'")}')"><span>${name}</span><span style="font-family:monospace;font-weight:700;">${cnt}</span></div>`;
+      });
+      container.innerHTML = html;
+    }
+
+    function setItem(it) { currentItem = it; renderItemAccordion(); renderList(); }
+
+    function setTab(tab, e) {
+      document.querySelectorAll('.status-tab').forEach(t => t.classList.remove('active'));
+      if (e) e.currentTarget.classList.add('active');
+      currentTab = tab; renderList();
     }
 
     function openFilterModal() { document.getElementById('filterModal').classList.add('active'); }
     function closeFilterModal() { document.getElementById('filterModal').classList.remove('active'); }
-    
-    function openCountryModal() {
-      const modal = document.getElementById('countryModal');
-      const container = document.getElementById('countryChips');
-      const countries = [...new Set(rawData.map(a => a.country).filter(c => c !== "Memuat..." && c !== "Unknown"))].sort();
-      
-      container.innerHTML = `<div class="chip ${currentCountry === 'all' ? 'active' : ''}" onclick="setCountry('all')">Semua Negara</div>`;
-      countries.forEach(c => {
-        container.innerHTML += `<div class="chip ${currentCountry === c ? 'active' : ''}" onclick="setCountry('${c}')">${c}</div>`;
-      });
-      modal.classList.add('active');
-    }
-    function closeCountryModal() { document.getElementById('countryModal').classList.remove('active'); }
-    function setCountry(c) { currentCountry = c; closeCountryModal(); renderList(); }
-
-    function openItemModal() {
-      const modal = document.getElementById('itemModal');
-      const container = document.getElementById('itemChips');
-      container.innerHTML = `
-        <div class="chip ${currentItem === 'all' ? 'active' : ''}" onclick="setItem('all')">Semua Item</div>
-        <div class="chip ${currentItem === 'headless' ? 'active' : ''}" onclick="setItem('headless')">Headless</div>
-        <div class="chip ${currentItem === 'korblox' ? 'active' : ''}" onclick="setItem('korblox')">Korblox</div>
-        <div class="chip ${currentItem === 'malivinius' ? 'active' : ''}" onclick="setItem('malivinius')">Malivinius</div>
-      `;
-      modal.classList.add('active');
-    }
-    function closeItemModal() { document.getElementById('itemModal').classList.remove('active'); }
-    function setItem(i) { currentItem = i; closeItemModal(); renderList(); }
-
-    function setTab(tab, e) {
-      document.querySelectorAll('.status-tab').forEach(t => t.classList.remove('active'));
-      if(e) e.target.classList.add('active');
-      currentTab = tab;
-      renderList();
-    }
 
     document.querySelectorAll('#filterChips .chip').forEach(chip => {
       chip.addEventListener('click', () => {
         document.querySelectorAll('#filterChips .chip').forEach(c => c.classList.remove('active'));
-        chip.classList.add('active');
-        currentFilter = chip.dataset.filter;
-        renderList();
+        chip.classList.add('active'); currentFilter = chip.dataset.filter; renderList();
+      });
+    });
+
+    document.querySelectorAll('#bundleChips .chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        document.querySelectorAll('#bundleChips .chip').forEach(c => c.classList.remove('active'));
+        chip.classList.add('active'); currentBundle = chip.dataset.bundle; renderList();
+      });
+    });
+
+    document.querySelectorAll('#statusFilterChips .chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        document.querySelectorAll('#statusFilterChips .chip').forEach(c => c.classList.remove('active'));
+        chip.classList.add('active'); currentStatusChip = chip.dataset.st; renderList();
       });
     });
 
     function renderStats() {
       const total = rawData.length;
-      const validCount = Object.values(localStatuses).filter(s => s === 'valid').length;
-      const invalidCount = Object.values(localStatuses).filter(s => s === 'invalid').length;
-      const secureCount = Object.values(localStatuses).filter(s => s === 'secure').length;
-      const crossCount = Object.values(localStatuses).filter(s => s === 'cross').length;
-      const activeCount = total - (validCount + invalidCount + secureCount + crossCount);
+      const vals = Object.values(localStatuses);
+      const validCount = vals.filter(s => s === 'valid').length;
+      const invalidCount = vals.filter(s => s === 'invalid').length;
+      const secureCount = vals.filter(s => s === 'secure').length;
+      const crossCount = vals.filter(s => s === 'cross').length;
+      const checkedCount = validCount + invalidCount + secureCount + crossCount;
+      const activeCount = total - checkedCount;
+      const privateCount = rawData.filter(a => a.isPrivate).length;
 
       document.getElementById('statTotal').innerText = total;
-      document.getElementById('statSub').innerText = `${activeCount} belum dicek`;
+      document.getElementById('statSub').innerText = `${checkedCount} dicek · ${activeCount} belum · ${privateCount} private`;
       document.getElementById('cnt-active').innerText = activeCount;
       document.getElementById('cnt-valid').innerText = validCount;
       document.getElementById('cnt-invalid').innerText = invalidCount;
       document.getElementById('cnt-secure').innerText = secureCount;
       document.getElementById('cnt-cross').innerText = crossCount;
+      document.getElementById('exp-cnt-all').innerText = total;
+      document.getElementById('exp-cnt-valid').innerText = validCount;
+      document.getElementById('exp-cnt-invalid').innerText = invalidCount;
 
       const totalRap = rawData.reduce((acc, x) => acc + (x.rap || 0), 0);
       document.getElementById('statTotalRap').innerText = totalRap.toLocaleString();
@@ -318,89 +457,137 @@
       document.getElementById('statKorblox').innerText = rawData.filter(a => a.korblox).length;
       document.getElementById('statMalivinius').innerText = rawData.filter(a => a.malivinius).length;
       document.getElementById('statHasMail').innerText = rawData.filter(a => a.has_verified).length;
-
-      const uniqueCountries = new Set(rawData.map(a => a.country).filter(c => c !== "Memuat..." && c !== "Unknown"));
-      document.getElementById('countryBadge').innerText = `${uniqueCountries.size} NEGARA ›`;
     }
 
     function renderList() {
       const searchQ = document.getElementById('searchInput').value.toLowerCase();
       const sortOrder = document.getElementById('sortOrder').value;
       const accList = document.getElementById('accList');
-      
+
       let displayData = rawData.filter(acc => {
         const st = localStatuses[acc.id] || 'active';
-        if (currentTab !== 'active' && st !== currentTab) return false;
         if (currentTab === 'active' && st !== 'active') return false;
+        if (currentTab !== 'active' && st !== currentTab) return false;
         if (currentCountry !== 'all' && acc.country !== currentCountry) return false;
-        if (currentItem !== 'all' && !acc[currentItem]) return false;
+        if (currentItem !== 'all' && !(acc.limiteds || []).includes(currentItem)) return false;
+        if (currentFilter === 'avatar' && !acc.hasCustomAvatar) return false;
         if (currentFilter === 'ip' && !acc.hasIP) return false;
-        if (currentFilter === 'headless' && !acc.headless) return false;
-        if (currentFilter === 'korblox' && !acc.korblox) return false;
-        if (currentFilter === 'malivinius' && !acc.malivinius) return false;
-        if (currentFilter === 'has_verified' && !acc.has_verified) return false;
+        if (currentFilter === 'rap_private' && !acc.isPrivate) return false;
+        if (currentFilter === 'secure' && st !== 'secure') return false;
+        if (currentFilter === 'cross' && st !== 'cross') return false;
+        if (currentBundle === 'headless' && !acc.headless) return false;
+        if (currentBundle === 'korblox' && !acc.korblox) return false;
+        if (currentBundle === 'malivinius' && !acc.malivinius) return false;
+        if (currentBundle === 'has_verified' && !acc.has_verified) return false;
+        if (currentBundle === 'has_limited' && (!acc.limiteds || acc.limiteds.length === 0)) return false;
+        if (currentStatusChip === 'starred' && !localStars[acc.id]) return false;
         if (searchQ) {
-          const hay = `${acc.usn} ${acc.ip} ${acc.country}`.toLowerCase();
+          const hay = `${acc.usn} ${acc.ip} ${acc.country} ${(acc.limiteds || []).join(' ')}`.toLowerCase();
           if (!hay.includes(searchQ)) return false;
         }
         return true;
       });
 
-      if (sortOrder === 'rap_desc') displayData.sort((a,b) => b.rap - a.rap);
-      if (sortOrder === 'rap_asc') displayData.sort((a,b) => a.rap - b.rap);
+      if (sortOrder === 'rap_desc') displayData.sort((a, b) => b.rap - a.rap);
+      if (sortOrder === 'rap_asc') displayData.sort((a, b) => a.rap - b.rap);
+
+      currentFilteredData = displayData;
+      document.getElementById('exp-cnt-shown').innerText = displayData.length;
 
       if (displayData.length === 0) {
-        accList.innerHTML = `<div style="text-align:center; padding: 20px; color: var(--muted);">Tidak ada data yang cocok.</div>`;
+        accList.innerHTML = `<div style="text-align:center; padding: 30px; color: var(--muted);">Tidak ada akun yang cocok dengan filter ini.</div>`;
         return;
       }
 
-      accList.innerHTML = displayData.slice(0, 50).map(acc => {
+      accList.innerHTML = displayData.slice(0, 60).map(acc => {
         const currentStatus = localStatuses[acc.id] || 'active';
-        const cValid = currentStatus === 'valid' ? 'active-valid' : '';
-        const cInvalid = currentStatus === 'invalid' ? 'active-invalid' : '';
-        const cSecure = currentStatus === 'secure' ? 'active-secure' : '';
-        const cCross = currentStatus === 'cross' ? 'active-cross' : '';
-
+        const isStarred = Boolean(localStars[acc.id]);
         const limitedTags = [];
-        if(acc.headless) limitedTags.push(`<span style="background:#d97706; color:#fff; padding:2px 5px; border-radius:4px; font-size:10px;">H</span>`);
-        if(acc.korblox) limitedTags.push(`<span style="background:#9333ea; color:#fff; padding:2px 5px; border-radius:4px; font-size:10px;">K</span>`);
-        if(acc.malivinius) limitedTags.push(`<span style="background:#0ea5e9; color:#fff; padding:2px 5px; border-radius:4px; font-size:10px;">M</span>`);
+        if (acc.headless) limitedTags.push(`<span style="background:#d97706; color:#fff; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:700;">HEADLESS</span>`);
+        if (acc.korblox) limitedTags.push(`<span style="background:#9333ea; color:#fff; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:700;">KORBLOX</span>`);
+        if (acc.malivinius) limitedTags.push(`<span style="background:#0ea5e9; color:#fff; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:700;">MALIV</span>`);
 
         return `
           <div class="acc-card">
-            <button class="star-btn">☆</button>
+            <button class="star-btn ${isStarred ? 'starred' : ''}" onclick="toggleStar(${acc.id})">${isStarred ? '★' : '☆'}</button>
             <div class="acc-top">
-              <img class="acc-avatar" src="${acc.avatar}">
+              <img class="acc-avatar" src="${acc.avatar}" onerror="this.src='${DEFAULT_AVATAR}'">
               <div class="acc-info">
                 <div class="acc-name">${acc.usn}</div>
                 <div class="acc-usn">@${acc.usn}</div>
-                <div class="acc-details">
-                  ◎ ${acc.rap} &nbsp; 📍 ${acc.country} &nbsp; 🌐 ${acc.ip}
-                  ${acc.has_verified ? `<span style="background:#10b981; color:#fff; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:bold;">MAIL</span>` : ''}
+                <div class="acc-details"><span>◎ ${acc.rap}</span><span>📍 ${acc.country}</span><span>🌐 ${acc.ip}</span></div>
+                <div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
+                  ${acc.has_verified ? `<span class="mail-pill">MAIL</span>` : ''}
+                  ${limitedTags.join('')}
                 </div>
-                <div style="display:flex; gap:5px; margin-top:5px;">${limitedTags.join('')}</div>
               </div>
             </div>
             <div class="acc-actions">
-              <button class="btn-copy" onclick="navigator.clipboard.writeText('${acc.usn}'); alert('USN Dicopy!')">❏ Salin USN</button>
-              <button class="btn-copy pw" onclick="navigator.clipboard.writeText('${acc.pw}'); alert('PW Dicopy!')">⚷ Salin PW</button>
+              <button class="btn-copy" onclick="copyText('${acc.usn.replace(/'/g, "\\'")}', 'USN Disalin!')">❏ Salin USN</button>
+              <button class="btn-copy pw" onclick="copyText('${acc.pw.replace(/'/g, "\\'")}', 'PW Disalin!')">⚷ Salin PW</button>
             </div>
             <div class="status-actions">
-              <button class="btn-status ${cValid}" onclick="setStatus(${acc.id}, 'valid')">VALID</button>
-              <button class="btn-status ${cInvalid}" onclick="setStatus(${acc.id}, 'invalid')">INVALID</button>
-              <button class="btn-status ${cSecure}" onclick="setStatus(${acc.id}, 'secure')">SECURE</button>
-              <button class="btn-status ${cCross}" onclick="setStatus(${acc.id}, 'cross')">CROSS</button>
+              <button class="btn-status ${currentStatus === 'valid' ? 'active-valid' : ''}" onclick="setStatus(${acc.id}, 'valid')"><span>✓</span>VALID</button>
+              <button class="btn-status ${currentStatus === 'invalid' ? 'active-invalid' : ''}" onclick="setStatus(${acc.id}, 'invalid')"><span>✕</span>INVALID</button>
+              <button class="btn-status ${currentStatus === 'secure' ? 'active-secure' : ''}" onclick="setStatus(${acc.id}, 'secure')"><span>🛡</span>SECURE</button>
+              <button class="btn-status ${currentStatus === 'cross' ? 'active-cross' : ''}" onclick="setStatus(${acc.id}, 'cross')"><span>⚠</span>CROSS</button>
             </div>
           </div>
         `;
-      }).join("");
+      }).join('');
+    }
+
+    function copyText(txt, msg) { navigator.clipboard.writeText(txt); showToast(msg); }
+
+    function toggleStar(id) {
+      if (localStars[id]) delete localStars[id]; else localStars[id] = true;
+      localStorage.setItem('dyriee_stars', JSON.stringify(localStars));
+      renderList();
     }
 
     function setStatus(id, status) {
-      if (localStatuses[id] === status) delete localStatuses[id];
-      else localStatuses[id] = status;
-      renderStats();
-      renderList();
+      if (localStatuses[id] === status) delete localStatuses[id]; else localStatuses[id] = status;
+      localStorage.setItem('dyriee_statuses', JSON.stringify(localStatuses));
+      renderStats(); renderList();
+    }
+
+    function toggleExportMenu(e) { e.stopPropagation(); document.getElementById('exportPopover').classList.toggle('open'); }
+    document.addEventListener('click', () => document.getElementById('exportPopover').classList.remove('open'));
+
+    function setExportScope(scope, btn) {
+      exportScope = scope;
+      document.querySelectorAll('.scope-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    }
+
+    function exportData(format) {
+      let targetList = [];
+      if (exportScope === 'shown') targetList = currentFilteredData;
+      else if (exportScope === 'all') targetList = rawData;
+      else if (exportScope === 'valid') targetList = rawData.filter(a => localStatuses[a.id] === 'valid');
+      else if (exportScope === 'invalid') targetList = rawData.filter(a => localStatuses[a.id] === 'invalid');
+
+      if (format === 'fav') {
+        targetList = rawData.filter(a => localStars[a.id]);
+        if (!targetList.length) { alert('Belum ada akun yang dibintangi.'); return; }
+        downloadBlob(targetList.map(a => a.usn).join('\n'), 'dyriee_favorit.txt', 'text/plain'); return;
+      }
+
+      if (!targetList.length) { alert('Tidak ada data pada pilihan ini.'); return; }
+
+      if (format === 'txt') {
+        downloadBlob(targetList.map(a => `${a.usn}:${a.pw}:${a.ip}`).join('\n'), `dyriee_${exportScope}.txt`, 'text/plain');
+      } else if (format === 'csv') {
+        const header = 'Username,Password,IP,Country,RAP,HasMail,Status\n';
+        const rows = targetList.map(a => `"${a.usn}","${a.pw}","${a.ip}","${a.country}",${a.rap},${a.has_verified},"${localStatuses[a.id] || 'active'}"`).join('\n');
+        downloadBlob(header + rows, `dyriee_${exportScope}.csv`, 'text/csv');
+      }
+    }
+
+    function downloadBlob(content, filename, mime) {
+      const blob = new Blob([content], { type: mime });
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = filename; a.click();
+      document.getElementById('exportPopover').classList.remove('open');
     }
 
     loadAccountsData();
