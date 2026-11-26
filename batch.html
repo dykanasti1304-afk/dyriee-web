@@ -9,40 +9,32 @@
     :root { --bg: #0a0a0e; --surface: #14141a; --surface-2: #1e1e26; --border: rgba(255,255,255,0.08); --text: #f4f4f8; --muted: #8e8ea0; --gold: #f5d78e; --green: #10b981; --red: #ef4444; --blue: #3b82f6; }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
     body { background: var(--bg); color: var(--text); min-height: 100vh; padding-bottom: 80px; }
-    
     .header { position: sticky; top: 0; background: rgba(10,10,14,0.9); backdrop-filter: blur(10px); padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); z-index: 100; }
     .header-left { display: flex; align-items: center; gap: 10px; }
     .back-btn { width: 36px; height: 36px; background: var(--surface-2); border-radius: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; border: none; color: #fff; }
     .header-title { font-size: 14px; font-weight: bold; }
-    
     .container { padding: 15px; display: flex; flex-direction: column; gap: 15px; max-width: 600px; margin: 0 auto; }
     .search-row { display: flex; gap: 10px; }
     .search-input { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px 12px 12px 35px; color: #fff; font-size: 14px; }
     .search-icon { position: absolute; margin-left: 10px; margin-top: 12px; color: var(--muted); }
     .btn-filter { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px; color: #fff; cursor: pointer; }
-    
     .overview-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 15px; }
     .overview-header { display: flex; justify-content: space-between; color: var(--muted); font-size: 11px; font-weight: bold; letter-spacing: 1px; cursor: pointer; }
     .total-number { font-size: 40px; font-weight: 900; margin: 5px 0; }
     .overview-sub { font-size: 12px; color: var(--muted); }
-    
-    /* Style buat Detail Grid */
     .detail-grid { display: none; flex-direction: column; gap: 10px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.05); margin-top: 10px; }
     .detail-grid.open { display: flex; }
     .metric-row { display: flex; justify-content: space-between; font-size: 13px; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
     .metric-row:last-child { border-bottom: none; }
     .metric-label { color: var(--muted); }
     .metric-val { font-weight: bold; }
-    
     .filter-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 15px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; margin-bottom: 10px; }
     .filter-title { font-size: 12px; font-weight: bold; color: var(--muted); text-transform: uppercase; }
     .filter-badge { background: var(--surface-2); padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: bold; }
-    
     .status-tabs { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 5px; scrollbar-width: none; }
     .status-tabs::-webkit-scrollbar { display: none; }
     .status-tab { padding: 8px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 20px; font-size: 13px; font-weight: bold; white-space: nowrap; cursor: pointer; color: var(--muted); }
     .status-tab.active { background: var(--gold); color: #000; border-color: var(--gold); }
-    
     .acc-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 15px; display: flex; flex-direction: column; gap: 12px; position: relative; margin-bottom: 15px; }
     .acc-top { display: flex; gap: 15px; }
     .acc-avatar { width: 80px; height: 80px; border-radius: 12px; background: var(--surface-2); object-fit: cover; }
@@ -51,19 +43,15 @@
     .acc-usn { font-size: 13px; color: var(--muted); }
     .acc-details { display: flex; gap: 10px; font-size: 12px; color: var(--muted); align-items: center; margin-top: 2px; flex-wrap: wrap; }
     .star-btn { position: absolute; top: 15px; right: 15px; background: transparent; border: none; color: var(--muted); font-size: 20px; cursor: pointer; }
-    
     .acc-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
     .btn-copy { background: #fff; color: #000; border: none; padding: 12px; border-radius: 10px; font-weight: bold; font-size: 13px; cursor: pointer; }
     .btn-copy.pw { background: var(--surface-2); color: #fff; border: 1px solid var(--border); }
-    
     .status-actions { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 5px; }
     .btn-status { background: var(--surface-2); border: 1px solid var(--border); color: var(--muted); padding: 8px; border-radius: 8px; font-size: 11px; font-weight: bold; cursor: pointer; text-align: center; }
     .btn-status.active-valid { color: var(--green); border-color: var(--green); }
     .btn-status.active-invalid { color: var(--red); border-color: var(--red); }
     .btn-status.active-secure { color: var(--blue); border-color: var(--blue); }
     .btn-status.active-cross { color: var(--gold); border-color: var(--gold); }
-
-    /* MODAL FILTER */
     .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 999; display: none; align-items: flex-end; }
     .modal-overlay.active { display: flex; }
     .modal-content { background: var(--surface); width: 100%; border-radius: 20px 20px 0 0; padding: 20px; max-height: 80vh; overflow-y: auto; }
@@ -104,7 +92,6 @@
       <div class="total-number" id="statTotal">0</div>
       <div class="overview-sub" id="statSub">0 dicek · 0 belum</div>
       
-      <!-- Panel Detail -->
       <div class="detail-grid" id="detailGrid">
         <div class="metric-row"><span class="metric-label">Total RAP</span><span class="metric-val" id="statTotalRap" style="color: var(--gold);">0</span></div>
         <div class="metric-row"><span class="metric-label">Valid</span><span class="metric-val" id="statValidDetail" style="color: var(--green);">0</span></div>
@@ -138,7 +125,6 @@
     <div id="accList"></div>
   </div>
 
-  <!-- MODAL FILTER UTAMA -->
   <div class="modal-overlay" id="filterModal">
     <div class="modal-content">
       <div class="modal-header">Filters</div>
@@ -165,24 +151,18 @@
     </div>
   </div>
 
-  <!-- MODAL FILTER NEGARA -->
   <div class="modal-overlay" id="countryModal">
     <div class="modal-content">
       <div class="modal-header">Pilih Negara</div>
-      <div class="chip-group" id="countryChips" style="max-height: 50vh; overflow-y: auto;">
-        <!-- Chip negara bakal di-generate di sini -->
-      </div>
+      <div class="chip-group" id="countryChips" style="max-height: 50vh; overflow-y: auto;"></div>
       <button class="btn-apply" style="margin-top: 20px;" onclick="closeCountryModal()">Tutup</button>
     </div>
   </div>
 
-  <!-- MODAL FILTER ITEM -->
   <div class="modal-overlay" id="itemModal">
     <div class="modal-content">
       <div class="modal-header">Filter Item RAP</div>
-      <div class="chip-group" id="itemChips" style="max-height: 50vh; overflow-y: auto;">
-        <!-- Chip item bakal di-generate di sini -->
-      </div>
+      <div class="chip-group" id="itemChips" style="max-height: 50vh; overflow-y: auto;"></div>
       <button class="btn-apply" style="margin-top: 20px;" onclick="closeItemModal()">Tutup</button>
     </div>
   </div>
@@ -195,7 +175,6 @@
     let currentCountry = 'all';
     let currentItem = 'all';
 
-    // 1. Ambil data dari accounts.json
     async function loadAccountsData() {
       try {
         const res = await fetch('accounts.json?t=' + new Date().getTime());
@@ -204,7 +183,6 @@
         const bagus = (json.bagus || []).map(a => ({ ...a, category: 'bagus' }));
         const biasa = (json.biasa || []).map(a => ({ ...a, category: 'biasa' }));
         const jelek = (json.jelek || []).map(a => ({ ...a, category: 'jelek' }));
-        
         const all = [...bagus, ...biasa, ...jelek];
         
         rawData = all.map((item, index) => ({
@@ -226,8 +204,8 @@
         renderStats();
         renderList();
         document.getElementById('headerTitle').innerText = "Data Checker (" + rawData.length + ")";
-        
-        // Cek negara otomatis buat yang "Unknown"
+
+        // Otomatis cek negara kalau "Unknown"
         rawData.forEach(acc => {
           if (acc.country === "Unknown" && acc.ip && acc.ip !== "-") {
             fetchCountryForIP(acc.ip, acc.id);
@@ -236,11 +214,10 @@
 
       } catch(e) {
         console.error("Gagal load accounts.json", e);
-        document.getElementById('accList').innerHTML = `<div style="text-align:center; padding: 20px; color: var(--muted);">Gagal memuat accounts.json. Pastikan file ada di GitHub.</div>`;
+        document.getElementById('accList').innerHTML = `<div style="text-align:center; padding: 20px; color: var(--muted);">Gagal memuat accounts.json.</div>`;
       }
     }
 
-    // Fungsi nembak API ipwho.is
     async function fetchCountryForIP(ip, id) {
       try {
         const res = await fetch(`https://ipwho.is/${ip}`);
@@ -256,7 +233,6 @@
       } catch(e) {}
     }
 
-    // --- LOGIKA UI ---
     function toggleDetail() {
       const grid = document.getElementById('detailGrid');
       const btn = document.getElementById('detailBtn');
@@ -289,11 +265,10 @@
     function openItemModal() {
       const modal = document.getElementById('itemModal');
       const container = document.getElementById('itemChips');
-      
       container.innerHTML = `
         <div class="chip ${currentItem === 'all' ? 'active' : ''}" onclick="setItem('all')">Semua Item</div>
-        <div class="chip ${currentItem === 'headless' ? 'active' : ''}" onclick="setItem('headless')">Headless Horseman</div>
-        <div class="chip ${currentItem === 'korblox' ? 'active' : ''}" onclick="setItem('korblox')">Korblox Deathspeaker</div>
+        <div class="chip ${currentItem === 'headless' ? 'active' : ''}" onclick="setItem('headless')">Headless</div>
+        <div class="chip ${currentItem === 'korblox' ? 'active' : ''}" onclick="setItem('korblox')">Korblox</div>
         <div class="chip ${currentItem === 'malivinius' ? 'active' : ''}" onclick="setItem('malivinius')">Malivinius</div>
       `;
       modal.classList.add('active');
@@ -333,7 +308,6 @@
       document.getElementById('cnt-secure').innerText = secureCount;
       document.getElementById('cnt-cross').innerText = crossCount;
 
-      // Detail Stats
       const totalRap = rawData.reduce((acc, x) => acc + (x.rap || 0), 0);
       document.getElementById('statTotalRap').innerText = totalRap.toLocaleString();
       document.getElementById('statValidDetail').innerText = validCount;
@@ -356,19 +330,15 @@
       
       let displayData = rawData.filter(acc => {
         const st = localStatuses[acc.id] || 'active';
-        
         if (currentTab !== 'active' && st !== currentTab) return false;
         if (currentTab === 'active' && st !== 'active') return false;
-        
         if (currentCountry !== 'all' && acc.country !== currentCountry) return false;
         if (currentItem !== 'all' && !acc[currentItem]) return false;
-        
         if (currentFilter === 'ip' && !acc.hasIP) return false;
         if (currentFilter === 'headless' && !acc.headless) return false;
         if (currentFilter === 'korblox' && !acc.korblox) return false;
         if (currentFilter === 'malivinius' && !acc.malivinius) return false;
         if (currentFilter === 'has_verified' && !acc.has_verified) return false;
-
         if (searchQ) {
           const hay = `${acc.usn} ${acc.ip} ${acc.country}`.toLowerCase();
           if (!hay.includes(searchQ)) return false;
