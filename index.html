@@ -72,6 +72,7 @@
     .icon-action { background: none; border: none; color: var(--muted); cursor: pointer; padding: 4px; }
 
     .btn-primary { background: var(--cream); color: #111; font-weight: 700; border: none; padding: 15px; border-radius: 13px; font-size: 14px; cursor: pointer; width: 100%; transition: all 0.2s; }
+    .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
     .btn-primary.muted-btn { background: var(--cream-dark); color: #111; }
     .btn-danger { background: var(--surface); border: 1px solid var(--border-light); color: #d4d4d8; padding: 13px; border-radius: 13px; font-size: 13px; font-weight: 600; cursor: pointer; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; }
     .footer-hint { text-align: center; font-size: 12px; color: var(--muted); margin-top: 4px; }
@@ -141,16 +142,25 @@
     </div>
 
     <div id="tab-baru" class="tab-content">
-      <div><label class="field-label">MASUKKAN KE</label><select class="select-box"><option value="new">Data baru</option><option value="existing">Gabung ke Data Checker</option></select></div>
-      <div><label class="field-label">NAMA DATA BARU (OPSIONAL)</label><input type="text" class="input-box" id="namaData" placeholder="misal: Order #17 · 17 Nov"></div>
+      <div>
+        <label class="field-label">MASUKKAN KE</label>
+        <select class="select-box" id="insertTarget">
+          <option value="new">Data baru (Scan Email &amp; RAP)</option>
+          <option value="existing">Gabung ke Data Checker</option>
+        </select>
+      </div>
+      <div>
+        <label class="field-label">NAMA DATA BARU (OPSIONAL)</label>
+        <input type="text" class="input-box" id="namaData" placeholder="misal: Order #17 · 17 Nov">
+      </div>
       <div class="dropzone" onclick="document.getElementById('fileInput').click()">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         <div style="font-weight: 700; color: #fff; font-size: 13.5px;">Tarik file .txt ke sini</div>
-        <div style="font-size: 11.5px; font-family: monospace;">atau <u style="color:#d4d4d8">pilih file</u> · format usn:pw:IP</div>
+        <div style="font-size: 11.5px; font-family: monospace;">atau <u style="color:#d4d4d8">pilih file</u> · format usn:pw:IP atau usn/pw/IP</div>
       </div>
       <input type="file" id="fileInput" style="display: none;" accept=".txt" onchange="handleFile(this)">
-      <textarea id="textInput" placeholder="Likali:pw123:103.150.60.10&#10;gori:pw456:8.8.8.8&#10;loko"></textarea>
-      <button class="btn-primary" onclick="submitText()">Simpan &amp; Buka Data Baru</button>
+      <textarea id="textInput" placeholder="Likali:pw123:103.150.60.10&#10;gori/pw456/8.8.8.8&#10;loko"></textarea>
+      <button class="btn-primary" id="btnScanSubmit" onclick="submitText()">Scan &amp; Buka Data Baru</button>
     </div>
 
     <div id="tab-pecah" class="tab-content">
@@ -193,6 +203,7 @@
 
     function openSelectedBatch() {
       if (!isCardSelected) { alert('Centang data terlebih dahulu untuk membukanya.'); return; }
+      localStorage.removeItem('dyriee_scanned_json');
       window.location.href = 'batch.html';
     }
 
@@ -209,7 +220,7 @@
           const maliv = all.filter(a => (a.limited_found || []).includes("Malivinius")).length;
           const mail = all.filter(a => a.has_verified).length;
           const totalRap = all.reduce((sum, a) => sum + Number(a.total_rap || 0), 0);
-          const withIp = all.filter(a => a.ip && a.ip !== "-").length;
+          const withIp = all.filter(a => a.ip && a.ip !== "-" && a.ip !== "N/A").length;
           const priv = all.filter(a => a.is_private || a.rap_private).length;
 
           document.getElementById('savedTitle').innerText = "Data Checker";
@@ -227,8 +238,16 @@
           document.getElementById('savedSubtitle').innerText = "Silakan upload file di tab Data baru.";
         }
       } catch (e) {
-        document.getElementById('savedTitle').innerText = "Data Lokal / Offline";
-        document.getElementById('savedSubtitle').innerText = "accounts.json tidak ditemukan.";
+        const localScanned = localStorage.getItem('dyriee_scanned_json');
+        if (localScanned) {
+          const parsed = JSON.parse(localScanned);
+          loadedAccounts = parsed;
+          document.getElementById('savedTitle').innerText = localStorage.getItem('dyriee_batch_name') || "Hasil Scan Lokal";
+          document.getElementById('savedSubtitle').innerHTML = `<strong>${parsed.length}</strong> akun tersimpan di browser`;
+        } else {
+          document.getElementById('savedTitle').innerText = "Data Lokal / Offline";
+          document.getElementById('savedSubtitle').innerText = "accounts.json tidak ditemukan.";
+        }
       }
     }
 
@@ -243,25 +262,80 @@
       const file = input.files[0];
       if (!file) return;
       const reader = new FileReader();
-      reader.onload = (e) => { document.getElementById('textInput').value = e.target.result; processTextData(e.target.result, true); };
+      reader.onload = (e) => {
+        document.getElementById('textInput').value = e.target.result;
+        processTextData(e.target.result, true);
+      };
       reader.readAsText(file);
     }
 
-    function submitText() { processTextData(document.getElementById('textInput').value, true); }
+    function submitText() {
+      processTextData(document.getElementById('textInput').value, true);
+    }
 
-    function processTextData(textData, redirect) {
+    async function processTextData(textData, redirect) {
       if (!textData.trim()) { alert("Data masih kosong!"); return; }
+
+      const btn = document.getElementById('btnScanSubmit');
+      const oldText = btn.innerText;
+      btn.innerText = "Memindai Topi Hijau & RAP...";
+      btn.disabled = true;
+
       const lines = textData.split('\n').filter(l => l.trim() !== '');
-      const batchName = document.getElementById('namaData').value.trim() || `Data Baru (${lines.length})`;
-      localStorage.setItem('dyriee_raw_data', textData);
-      localStorage.setItem('dyriee_batch_name', batchName);
-      alert(`Berhasil menyimpan ${lines.length} akun secara lokal!`);
-      if (redirect) window.location.href = 'batch.html';
+      const parsed = lines.map(l => {
+        const p = l.trim().split(/[:/]/);
+        return {
+          usn: (p[0] || '').trim(),
+          pass: (p[1] || '-').trim(),
+          ip: (p[2] || '-').trim()
+        };
+      }).filter(a => a.usn !== '');
+
+      try {
+        let allResults = [];
+        for (let i = 0; i < parsed.length; i += 10) {
+          const chunk = parsed.slice(i, i + 10);
+          btn.innerText = `Scanning (${Math.min(i + 10, parsed.length)}/${parsed.length})...`;
+
+          const res = await fetch('/api/scan', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ accounts: chunk })
+          });
+
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          const data = await res.json();
+          allResults = allResults.concat(data.results || []);
+        }
+
+        const targetMode = document.getElementById('insertTarget').value;
+        if (targetMode === 'existing' && loadedAccounts.length > 0) {
+          allResults = [...loadedAccounts, ...allResults];
+        }
+
+        const batchName = document.getElementById('namaData').value.trim() || `Hasil Scan (${allResults.length})`;
+        localStorage.setItem('dyriee_scanned_json', JSON.stringify(allResults));
+        localStorage.setItem('dyriee_batch_name', batchName);
+
+        if (redirect) window.location.href = 'batch.html';
+      } catch (err) {
+        alert("Gagal terhubung ke /api/scan (" + err.message + "). Data disimpan tanpa scan.");
+        const fallback = parsed.map(p => ({
+          usn: p.usn, pass: p.pass, ip: p.ip, location: "Unknown",
+          total_rap: 0, limited_found: [], has_verified: false, is_private: false
+        }));
+        localStorage.setItem('dyriee_scanned_json', JSON.stringify(fallback));
+        if (redirect) window.location.href = 'batch.html';
+      } finally {
+        btn.innerText = oldText;
+        btn.disabled = false;
+      }
     }
 
     function hapusData() {
       if (confirm("Yakin mau hapus semua data lokal?")) {
         localStorage.removeItem('dyriee_raw_data');
+        localStorage.removeItem('dyriee_scanned_json');
         localStorage.removeItem('dyriee_batch_name');
         localStorage.removeItem('dyriee_statuses');
         localStorage.removeItem('dyriee_stars');

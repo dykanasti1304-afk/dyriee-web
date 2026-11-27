@@ -32,6 +32,7 @@
     .search-input { width: 100%; background: var(--surface); border: 1px solid var(--border-light); border-radius: 12px; padding: 12px 12px 12px 38px; color: #fff; font-size: 13.5px; outline: none; }
     .sq-btn { width: 44px; height: 44px; background: var(--surface); border: 1px solid var(--border-light); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: var(--text); cursor: pointer; flex-shrink: 0; }
 
+    /* Export Dropdown Popover */
     .export-popover { position: absolute; top: 52px; right: 0; width: 280px; background: #18181c; border: 1px solid var(--border-light); border-radius: 16px; padding: 14px; box-shadow: 0 20px 40px rgba(0,0,0,0.7); z-index: 200; display: none; flex-direction: column; gap: 12px; }
     .export-popover.open { display: flex; }
     .pop-label { font-size: 10.5px; font-weight: 700; color: var(--muted); letter-spacing: 1px; }
@@ -83,14 +84,14 @@
     .status-tab.active .cnt { background: rgba(0,0,0,0.14); color: #111; }
 
     .acc-card { background: var(--surface); border: 1px solid var(--border-light); border-radius: 18px; padding: 15px; display: flex; flex-direction: column; gap: 14px; position: relative; margin-bottom: 12px; }
-    .acc-top { display: flex; gap: 14px; align-items: flex-start; }
+    .acc-top { display: flex; gap: 14px; align-items: flex-start; cursor: pointer; }
     .acc-avatar { width: 78px; height: 78px; border-radius: 14px; background: var(--surface-2); border: 1px solid var(--border); object-fit: cover; flex-shrink: 0; }
     .acc-info { flex: 1; min-width: 0; padding-right: 34px; }
     .acc-name { font-size: 16px; font-weight: 800; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .acc-usn { font-size: 13px; color: var(--muted); font-family: monospace; margin-top: 2px; }
     .acc-details { display: flex; gap: 8px; font-size: 12px; color: #d4d4d8; align-items: center; margin-top: 8px; flex-wrap: wrap; font-family: monospace; }
     .mail-pill { display: inline-block; margin-top: 8px; background: #4ade80; color: #052e16; padding: 2px 8px; border-radius: 5px; font-size: 10.5px; font-weight: 800; letter-spacing: 0.5px; }
-    .star-btn { position: absolute; top: 14px; right: 14px; width: 34px; height: 34px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px; color: var(--muted); font-size: 16px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+    .star-btn { position: absolute; top: 14px; right: 14px; width: 34px; height: 34px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px; color: var(--muted); font-size: 16px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 2; }
     .star-btn.starred { color: #facc15; border-color: rgba(250, 204, 21, 0.4); }
 
     .acc-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -123,11 +124,11 @@
     .detail-popup-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 2000; display: none; align-items: center; justify-content: center; padding: 20px; }
     .detail-popup-overlay.active { display: flex; }
     .detail-popup-content { background: var(--surface); border: 1px solid var(--border-light); border-radius: 20px; width: 100%; max-width: 400px; padding: 20px; position: relative; }
-    .detail-popup-close { position: absolute; top: 12px; right: 12px; background: var(--surface-2); border: none; color: #fff; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; }
-    .detail-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+    .detail-popup-close { position: absolute; top: 12px; right: 12px; background: var(--surface-2); border: none; color: #fff; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; font-size: 16px; }
+    .detail-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; gap: 12px; }
     .detail-row:last-child { border-bottom: none; }
-    .detail-label { color: var(--muted); }
-    .detail-value { font-weight: 600; color: #fff; text-align: right; }
+    .detail-label { color: var(--muted); flex-shrink: 0; }
+    .detail-value { font-weight: 600; color: #fff; text-align: right; word-break: break-word; }
   </style>
 </head>
 <body>
@@ -159,6 +160,37 @@
       <button class="sq-btn" onclick="toggleExportMenu(event)" title="Ekspor Data">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
       </button>
+
+      <!-- Export Dropdown Menu -->
+      <div class="export-popover" id="exportPopover" onclick="event.stopPropagation()">
+        <div class="pop-label">AMBIL DARI MANA?</div>
+        <div class="scope-grid">
+          <button class="scope-btn active" data-scope="shown" onclick="setExportScope('shown', this)">
+            <span>Yang tampil</span> <span id="exp-cnt-shown">0</span>
+          </button>
+          <button class="scope-btn" data-scope="all" onclick="setExportScope('all', this)">
+            <span>Semua</span> <span id="exp-cnt-all">0</span>
+          </button>
+          <button class="scope-btn" data-scope="valid" onclick="setExportScope('valid', this)">
+            <span>Valid</span> <span id="exp-cnt-valid">0</span>
+          </button>
+          <button class="scope-btn" data-scope="invalid" onclick="setExportScope('invalid', this)">
+            <span>Invalid</span> <span id="exp-cnt-invalid">0</span>
+          </button>
+        </div>
+        <button class="export-option" onclick="exportData('csv')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" style="margin-top:2px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          <div><div class="export-option-title">CSV Lengkap</div><div class="export-option-sub">Semua kolom, Excel-ready</div></div>
+        </button>
+        <button class="export-option" onclick="exportData('txt')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" style="margin-top:2px;"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+          <div><div class="export-option-title">Download TXT</div><div class="export-option-sub">usn:pw:IP — satu per baris</div></div>
+        </button>
+        <button class="export-option" onclick="exportData('fav')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" style="margin-top:2px;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          <div><div class="export-option-title">Favorit saja</div><div class="export-option-sub">USN dari akun berbintang</div></div>
+        </button>
+      </div>
     </div>
 
     <div class="overview-card">
@@ -179,6 +211,10 @@
           <div class="metric-box"><div class="m-icon" style="color:var(--red);">✕</div><div><div class="m-label">INVALID</div><div class="m-val" id="statInvalidDetail" style="color:var(--red);">0</div></div></div>
           <div class="metric-box"><div class="m-icon" style="color:var(--blue);">🛡</div><div><div class="m-label">SECURE</div><div class="m-val" id="statSecureDetail" style="color:var(--blue);">0</div></div></div>
           <div class="metric-box"><div class="m-icon" style="color:var(--amber);">⚠</div><div><div class="m-label">CROSS</div><div class="m-val" id="statCrossDetail" style="color:var(--amber);">0</div></div></div>
+          <div class="metric-box"><div class="m-icon" style="color:#fbbf24;">👤</div><div><div class="m-label">HEADLESS</div><div class="m-val" id="statHeadless">0</div></div></div>
+          <div class="metric-box"><div class="m-icon" style="color:var(--purple);">🦴</div><div><div class="m-label">KORBLOX</div><div class="m-val" id="statKorblox">0</div></div></div>
+          <div class="metric-box"><div class="m-icon" style="color:var(--blue);">💎</div><div><div class="m-label">MALIVINIUS</div><div class="m-val" id="statMalivinius">0</div></div></div>
+          <div class="metric-box"><div class="m-icon" style="color:var(--green);">✉</div><div><div class="m-label">HAS MAIL</div><div class="m-val" id="statHasMail">0</div></div></div>
         </div>
       </div>
     </div>
@@ -213,7 +249,6 @@
     <div id="accList"></div>
   </div>
 
-  <!-- Filter Modal -->
   <div class="modal-overlay" id="filterModal" onclick="closeFilterModal()">
     <div class="modal-content" onclick="event.stopPropagation()">
       <div class="drag-handle"></div>
@@ -233,6 +268,8 @@
           <div class="chip" data-filter="avatar">Dengan avatar</div>
           <div class="chip" data-filter="ip">Dengan IP</div>
           <div class="chip" data-filter="rap_private">RAP private</div>
+          <div class="chip" data-filter="secure">Secure</div>
+          <div class="chip" data-filter="cross">Cross</div>
         </div>
       </div>
       <div class="modal-section">
@@ -243,15 +280,22 @@
           <div class="chip" data-bundle="korblox">Korblox</div>
           <div class="chip" data-bundle="malivinius">Malivinius</div>
           <div class="chip" data-bundle="has_verified">Has Mail</div>
+          <div class="chip" data-bundle="has_limited">Item Limited</div>
+        </div>
+      </div>
+      <div class="modal-section">
+        <h4>STATUS</h4>
+        <div class="chip-group" id="statusFilterChips">
+          <div class="chip active" data-st="all">Semua</div>
+          <div class="chip" data-st="starred">Favorit (★)</div>
         </div>
       </div>
       <button class="btn-apply" onclick="closeFilterModal()">Terapkan</button>
     </div>
   </div>
 
-  <!-- Detail Popup Overlay -->
-  <div class="detail-popup-overlay" id="detailPopupOverlay">
-    <div class="detail-popup-content">
+  <div class="detail-popup-overlay" id="detailPopupOverlay" onclick="closeDetailPopup()">
+    <div class="detail-popup-content" onclick="event.stopPropagation()">
       <button class="detail-popup-close" onclick="closeDetailPopup()">×</button>
       <div id="detailPopupBody"></div>
     </div>
@@ -265,7 +309,8 @@
     let currentTab = 'active';
     let localStatuses = JSON.parse(localStorage.getItem('dyriee_statuses') || '{}');
     let localStars = JSON.parse(localStorage.getItem('dyriee_stars') || '{}');
-    let currentFilter = 'all', currentBundle = 'all', currentStatusChip = 'all', currentCountry = 'all', currentItem = 'all', exportScope = 'shown';
+    let currentFilter = 'all', currentBundle = 'all', currentStatusChip = 'all', currentCountry = 'all', currentItem = 'all';
+    let exportScope = 'shown';
     const DEFAULT_AVATAR = "https://tr.rbxcdn.com/30DAY-AvatarHeadshot-A4F764CB5B7A62140A826DCBA9EE5F7E-Png/150/150/AvatarHeadshot/Webp/noFilter";
 
     function showToast(msg) {
@@ -274,7 +319,42 @@
       setTimeout(() => t.classList.remove('show'), 1800);
     }
 
+    function mapAccountList(all) {
+      return all.map((item, index) => {
+        const limiteds = item.limited_found || [];
+        return {
+          id: index,
+          usn: item.usn || "Unknown",
+          pw: item.pass || "-",
+          ip: item.ip || "-",
+          country: (item.location || "Unknown").split("(")[0].trim(),
+          rap: Number(item.total_rap || 0),
+          avatar: item.avatar_url || DEFAULT_AVATAR,
+          hasCustomAvatar: Boolean(item.avatar_url),
+          limiteds: limiteds,
+          headless: limiteds.includes("Headless Horseman"),
+          korblox: limiteds.includes("Korblox Deathspeaker"),
+          malivinius: limiteds.includes("Malivinius"),
+          has_verified: Boolean(item.has_verified),
+          isPrivate: Boolean(item.is_private || item.rap_private),
+          hasIP: Boolean(item.ip && item.ip !== "-" && item.ip !== "N/A"),
+          isBanned: Boolean(item.is_banned),
+          displayName: item.name || item.usn || "Unknown"
+        };
+      });
+    }
+
     async function loadAccountsData() {
+      const localScanned = localStorage.getItem('dyriee_scanned_json');
+      if (localScanned) {
+        const parsed = JSON.parse(localScanned);
+        rawData = mapAccountList(parsed);
+        initUI();
+        document.getElementById('headerTitle').innerText = localStorage.getItem('dyriee_batch_name') || `Hasil Scan (${rawData.length})`;
+        rawData.forEach(acc => { if (acc.country === "Unknown" && acc.hasIP) fetchCountryForIP(acc.ip, acc.id); });
+        return;
+      }
+
       try {
         const res = await fetch('accounts.json?t=' + new Date().getTime());
         const json = await res.json();
@@ -282,23 +362,27 @@
         const biasa = (json.biasa || []).map(a => ({ ...a, category: 'biasa' }));
         const jelek = (json.jelek || []).map(a => ({ ...a, category: 'jelek' }));
         const all = [...bagus, ...biasa, ...jelek];
-        rawData = all.map((item, index) => {
-          const limiteds = item.limited_found || [];
-          return {
-            id: index, usn: item.usn || "Unknown", pw: item.pass || "-", ip: item.ip || "-",
-            country: (item.location || "Unknown").split("(")[0].trim(), rap: Number(item.total_rap || 0),
-            avatar: item.avatar_url || DEFAULT_AVATAR, hasCustomAvatar: Boolean(item.avatar_url),
-            limiteds: limiteds, headless: limiteds.includes("Headless Horseman"),
-            korblox: limiteds.includes("Korblox Deathspeaker"), malivinius: limiteds.includes("Malivinius"),
-            has_verified: Boolean(item.has_verified), isPrivate: Boolean(item.is_private || item.rap_private),
-            hasIP: Boolean(item.ip && item.ip !== "-"), isBanned: item.is_banned || false,
-            displayName: item.name || item.usn
-          };
-        });
+        rawData = mapAccountList(all);
         initUI();
+        rawData.forEach(acc => { if (acc.country === "Unknown" && acc.hasIP) fetchCountryForIP(acc.ip, acc.id); });
       } catch (e) {
         document.getElementById('accList').innerHTML = `<div style="text-align:center; padding: 30px; color: var(--muted);">Gagal memuat accounts.json.</div>`;
       }
+    }
+
+    async function fetchCountryForIP(ip, id) {
+      try {
+        const res = await fetch(`https://ipwho.is/${ip}`);
+        const data = await res.json();
+        if (data.success) {
+          const acc = rawData.find(a => a.id === id);
+          if (acc) {
+            acc.country = data.country;
+            renderCountryAccordion();
+            renderList();
+          }
+        }
+      } catch (e) {}
     }
 
     function initUI() {
@@ -402,6 +486,7 @@
       document.getElementById('cnt-invalid').innerText = invalidCount;
       document.getElementById('cnt-secure').innerText = secureCount;
       document.getElementById('cnt-cross').innerText = crossCount;
+
       document.getElementById('exp-cnt-all').innerText = total;
       document.getElementById('exp-cnt-valid').innerText = validCount;
       document.getElementById('exp-cnt-invalid').innerText = invalidCount;
@@ -474,7 +559,11 @@
               <div class="acc-info">
                 <div class="acc-name">${acc.usn}</div>
                 <div class="acc-usn">@${acc.usn}</div>
-                <div class="acc-details"><span>◎ ${acc.rap}</span><span>📍 ${acc.country}</span><span>🌐 ${acc.ip}</span></div>
+                <div class="acc-details">
+                  <span>${acc.isPrivate ? '◎ Private' : `◎ ${acc.rap}`}</span>
+                  <span>📍 ${acc.country}</span>
+                  <span>🌐 ${acc.ip}</span>
+                </div>
                 <div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
                   ${acc.has_verified ? `<span class="mail-pill">MAIL</span>` : ''}
                   ${limitedTags.join('')}
@@ -521,9 +610,9 @@
         <div class="detail-row"><span class="detail-label">Password</span><span class="detail-value" style="font-family:monospace;">${acc.pw}</span></div>
         <div class="detail-row"><span class="detail-label">IP Address</span><span class="detail-value" style="font-family:monospace;">${acc.ip}</span></div>
         <div class="detail-row"><span class="detail-label">Negara</span><span class="detail-value">${acc.country}</span></div>
-        <div class="detail-row"><span class="detail-label">Total RAP</span><span class="detail-value" style="color:var(--cream);">${acc.rap}</span></div>
+        <div class="detail-row"><span class="detail-label">Total RAP</span><span class="detail-value" style="color:var(--cream);">${acc.isPrivate ? 'Private' : acc.rap.toLocaleString()}</span></div>
         <div class="detail-row"><span class="detail-label">Status Banned</span><span class="detail-value" style="color:${acc.isBanned ? 'var(--red)' : 'var(--green)'};">${acc.isBanned ? 'YA' : 'TIDAK'}</span></div>
-        <div class="detail-row"><span class="detail-label">Email Verified</span><span class="detail-value" style="color:${acc.has_verified ? 'var(--green)' : 'var(--muted)'};">${acc.has_verified ? 'YA' : 'TIDAK'}</span></div>
+        <div class="detail-row"><span class="detail-label">Email Verified</span><span class="detail-value" style="color:${acc.has_verified ? 'var(--green)' : 'var(--muted)'};">${acc.has_verified ? 'YA (Topi Hijau)' : 'TIDAK'}</span></div>
         <div class="detail-row"><span class="detail-label">Item Limited</span><span class="detail-value">${limiteds}</span></div>
       `;
       document.getElementById('detailPopupOverlay').classList.add('active');
@@ -531,8 +620,14 @@
 
     function closeDetailPopup() { document.getElementById('detailPopupOverlay').classList.remove('active'); }
 
-    function toggleExportMenu(e) { e.stopPropagation(); document.getElementById('exportPopover').classList.toggle('open'); }
-    document.addEventListener('click', () => document.getElementById('exportPopover').classList.remove('open'));
+    /* Export Popover Logic */
+    function toggleExportMenu(e) {
+      e.stopPropagation();
+      document.getElementById('exportPopover').classList.toggle('open');
+    }
+    document.addEventListener('click', () => {
+      document.getElementById('exportPopover').classList.remove('open');
+    });
 
     function setExportScope(scope, btn) {
       exportScope = scope;
@@ -550,23 +645,30 @@
       if (format === 'fav') {
         targetList = rawData.filter(a => localStars[a.id]);
         if (!targetList.length) { alert('Belum ada akun yang dibintangi.'); return; }
-        downloadBlob(targetList.map(a => a.usn).join('\n'), 'dyriee_favorit.txt', 'text/plain'); return;
+        downloadBlob(targetList.map(a => a.usn).join('\n'), 'dyriee_favorit.txt', 'text/plain');
+        return;
       }
 
       if (!targetList.length) { alert('Tidak ada data pada pilihan ini.'); return; }
 
       if (format === 'txt') {
-        downloadBlob(targetList.map(a => `${a.usn}:${a.pw}:${a.ip}`).join('\n'), `dyriee_${exportScope}.txt`, 'text/plain');
+        const content = targetList.map(a => `${a.usn}:${a.pw}:${a.ip}`).join('\n');
+        downloadBlob(content, `dyriee_${exportScope}.txt`, 'text/plain');
       } else if (format === 'csv') {
         const header = 'Username,Password,IP,Country,RAP,HasMail,Status\n';
-        const rows = targetList.map(a => `"${a.usn}","${a.pw}","${a.ip}","${a.country}",${a.rap},${a.has_verified},"${localStatuses[a.id] || 'active'}"`).join('\n');
+        const rows = targetList.map(a =>
+          `"${a.usn}","${a.pw}","${a.ip}","${a.country}",${a.rap},${a.has_verified},"${localStatuses[a.id] || 'active'}"`
+        ).join('\n');
         downloadBlob(header + rows, `dyriee_${exportScope}.csv`, 'text/csv');
       }
     }
 
     function downloadBlob(content, filename, mime) {
       const blob = new Blob([content], { type: mime });
-      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = filename; a.click();
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = filename;
+      a.click();
       document.getElementById('exportPopover').classList.remove('open');
     }
 
