@@ -342,7 +342,7 @@
           rap: Number(item.total_rap || 0),
           avatar: item.avatar_url || DEFAULT_AVATAR,
           hasCustomAvatar: Boolean(item.avatar_url),
-          limiteds: limiteds,
+          limiteds: limiteds, limitedItems: item.limited_items || limiteds.map(n => ({name: n, rap: 0, is_bundle: false})),
           headless: limiteds.includes("Headless Horseman"),
           korblox: limiteds.includes("Korblox Deathspeaker"),
           malivinius: limiteds.includes("Malivinius"),
@@ -435,14 +435,23 @@
     function renderItemAccordion() {
       const q = (document.getElementById('itemSearchInput')?.value || '').toLowerCase();
       const container = document.getElementById('itemListContainer');
-      const itemCounts = {};
-      rawData.forEach(a => { (a.limiteds || []).forEach(it => { itemCounts[it] = (itemCounts[it] || 0) + 1; }); });
-      const allItems = Object.entries(itemCounts).sort((a, b) => b[1] - a[1]);
+      const itemMap = {};
+      rawData.forEach(a => {
+        (a.limitedItems || []).forEach(it => {
+          const nm = typeof it === "string" ? it : it.name;
+          const rp = typeof it === "object" ? (it.rap || 0) : 0;
+          if (!itemMap[nm]) itemMap[nm] = { count: 0, rap: rp };
+          itemMap[nm].count += 1;
+          if (rp > itemMap[nm].rap) itemMap[nm].rap = rp;
+        });
+      });
+      const allItems = Object.entries(itemMap).sort((a, b) => b[1].rap - a[1].rap || b[1].count - a[1].count);
       document.getElementById('itemBadge').innerText = `${allItems.length} ITEM`;
       const filteredItems = allItems.filter(([name]) => name.toLowerCase().includes(q));
       let html = `<div class="list-bar-item ${currentItem === 'all' ? 'active' : ''}" onclick="setItem('all')"><span>Semua Item</span><span>${rawData.length}</span></div>`;
-      filteredItems.forEach(([name, cnt]) => {
-        html += `<div class="list-bar-item ${currentItem === name ? 'active' : ''}" onclick="setItem('${name.replace(/'/g, "\\'")}')"><span>${name}</span><span style="font-family:monospace;font-weight:700;">${cnt}</span></div>`;
+      filteredItems.forEach(([name, info]) => {
+        const rapLabel = info.rap > 0 ? `<span style="color:var(--cream);margin-right:10px;">${info.rap.toLocaleString()}</span>` : `<span style="color:var(--purple);margin-right:10px;">BUNDLE</span>`;
+        html += `<div class="list-bar-item ${currentItem === name ? 'active' : ''}" onclick="setItem('${name.replace(/'/g, "\\'")}')"><span>${name}</span><span style="font-family:monospace;font-weight:700;">${rapLabel}${info.count}</span></div>`;
       });
       container.innerHTML = html;
     }
@@ -613,7 +622,7 @@
     function showDetail(id) {
       const acc = rawData.find(a => a.id === id);
       if (!acc) return;
-      const limiteds = acc.limiteds && acc.limiteds.length > 0 ? acc.limiteds.join(', ') : '-';
+      const limiteds = acc.limitedItems && acc.limitedItems.length > 0 ? acc.limitedItems.map(i => i.rap > 0 ? `${i.name} (${i.rap.toLocaleString()})` : `${i.name} [Bundle]`).join(', ') : '-';
       document.getElementById('detailPopupBody').innerHTML = `
         <h2 style="font-size:18px; margin-bottom:12px; text-align:center;">Detail Akun</h2>
         <div class="detail-row"><span class="detail-label">Username</span><span class="detail-value">${acc.usn}</span></div>

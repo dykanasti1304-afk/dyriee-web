@@ -6,6 +6,18 @@ import concurrent.futures
 
 VERIFIED_ITEM_ID = 102611803
 
+# Daftar Bundle / Item Non-Limited Spesial (cek via Asset ID)
+SPECIAL_ASSETS = {
+    134330194: "Headless Horseman",
+    1509305368: "Headless Horseman", # Headless Head
+    13779237: "Korblox Deathspeaker",
+    139607718: "Korblox Deathspeaker", # Korblox Right Leg
+    1700277: "Malivinius",
+    1471464: "Green Banded Top Hat",
+    15178425: "Sparkle Time Fedora",
+    1029025: "Dominus Frigidus"
+}
+
 def req_json(url, method="GET", payload=None, timeout=6):
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/124.0.0.0 Safari/537.36",
@@ -30,6 +42,10 @@ def get_country(ip):
         return data.get("country", "Unknown")
     return "Unknown"
 
+def has_asset(uid, asset_id):
+    st, data = req_json(f"https://inventory.roblox.com/v1/users/{uid}/items/Asset/{asset_id}", timeout=5)
+    return st == 200 and data and len(data.get("data", [])) > 0
+
 def scan_one(acc):
     usn = acc.get("usn", "").strip()
     pw = acc.get("pass", "-")
@@ -38,11 +54,13 @@ def scan_one(acc):
     out = {
         "usn": usn, "pass": pw, "ip": ip, "location": "Unknown",
         "name": usn, "id": None, "is_banned": False, "avatar_url": "",
-        "total_rap": 0, "limited_found": [], "has_verified": False, "is_private": False
+        "total_rap": 0, "limited_found": [], "limited_items": [],
+        "has_verified": False, "is_private": False
     }
     if not usn:
         return out
 
+    # 1. Username -> UserID
     st, udata = req_json("https://users.roblox.com/v1/usernames/users", "POST", {"usernames": [usn], "excludeBannedUsers": False})
     if st != 200 or not udata or not udata.get("data"):
         return out
@@ -51,27 +69,39 @@ def scan_one(acc):
     out["id"] = uid
     out["name"] = udata["data"][0].get("displayName", usn)
 
+    # 2. Avatar Headshot
     _, av = req_json(f"https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds={uid}&size=150x150&format=Png&isCircular=false")
     if av and av.get("data"):
         out["avatar_url"] = av["data"][0].get("imageUrl", "")
 
-    st_hat, hat = req_json(f"https://inventory.roblox.com/v1/users/{uid}/items/Asset/{VERIFIED_ITEM_ID}")
-    if st_hat == 200 and hat and len(hat.get("data", [])) > 0:
-        out["has_verified"] = True
+    # 3. Cek Topi Hijau Verifikasi Email
+    out["has_verified"] = has_asset(uid, VERIFIED_ITEM_ID)
 
+    # 4. Cek Bundle/Item Spesial (Headless, Korblox, Malivinius, dll)
+    found_names = []
+    limited_items = []
+    for aid, label in SPECIAL_ASSETS.items():
+        if label not in found_names and has_asset(uid, aid):
+            found_names.append(label)
+            limited_items.append({"name": label, "rap": 0, "is_bundle": True})
+
+    # 5. Cek Item Limited & RAP per item
     st_col, col = req_json(f"https://inventory.roblox.com/v1/users/{uid}/assets/collectibles?limit=100")
     if st_col == 403:
         out["is_private"] = True
     elif st_col == 200 and col:
         rap = 0
-        lims = []
         for it in col.get("data", []):
-            rap += (it.get("recentAveragePrice") or 0)
-            if it.get("name"):
-                lims.append(it["name"])
+            item_rap = it.get("recentAveragePrice") or 0
+            item_name = it.get("name") or "Unknown Limited"
+            rap += item_rap
+            if item_name not in found_names:
+                found_names.append(item_name)
+            limited_items.append({"name": item_name, "rap": item_rap, "is_bundle": False})
         out["total_rap"] = rap
-        out["limited_found"] = lims
 
+    out["limited_found"] = found_names
+    out["limited_items"] = limited_items
     out["location"] = get_country(ip)
     return out
 
