@@ -106,16 +106,6 @@
       <p>Data ditampilkan per kelompok, jadi antar pekerjaan tidak tercampur.</p>
     </div>
 
-    <div class="quota-card">
-      <div class="quota-header"><span class="quota-label">KUOTA FILTER</span><span class="quota-count">150 / 150</span></div>
-      <div class="quota-bar"><div class="quota-fill"></div></div>
-      <div class="quota-note">Kuota habis — hubungi admin</div>
-      <div class="quota-actions">
-        <button class="btn-pill" onclick="alert('Hubungi admin untuk top up kuota.')">+ Top up kuota</button>
-        <button class="btn-pill" onclick="alert('Koin bonus: 0/5')"><span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:#facc15;"></span> 0/5</button>
-      </div>
-    </div>
-
     <div class="tabs">
       <div class="tab active" onclick="switchTab('tersimpan', event)">Data tersimpan</div>
       <div class="tab" onclick="switchTab('baru', event)">Data baru</div>
@@ -146,7 +136,7 @@
         <label class="field-label">MASUKKAN KE</label>
         <select class="select-box" id="insertTarget">
           <option value="new">Data baru (Scan Email &amp; RAP)</option>
-          <option value="existing">Gabung ke Data Checker</option>
+          
         </select>
       </div>
       <div>
@@ -207,15 +197,19 @@
       window.location.href = 'batch.html';
     }
 
-    async function loadAccountsData() {
-      try {
-        const res = await fetch('accounts.json?t=' + new Date().getTime());
-        const data = await res.json();
-        const all = [...(data.bagus || []), ...(data.biasa || []), ...(data.jelek || [])];
+    function loadAccountsData() {
+      const localScanned = localStorage.getItem('dyriee_scanned_json');
+      const card = document.getElementById('savedCard');
+      const btnOpen = document.getElementById('btnOpenBatch');
+
+      if (localScanned) {
+        const all = JSON.parse(localScanned);
         loadedAccounts = all;
         const total = all.length;
 
         if (total > 0) {
+          card.style.display = "flex";
+          btnOpen.style.display = "block";
           const korblox = all.filter(a => (a.limited_found || []).includes("Korblox Deathspeaker")).length;
           const maliv = all.filter(a => (a.limited_found || []).includes("Malivinius")).length;
           const mail = all.filter(a => a.has_verified).length;
@@ -223,7 +217,7 @@
           const withIp = all.filter(a => a.ip && a.ip !== "-" && a.ip !== "N/A").length;
           const priv = all.filter(a => a.is_private || a.rap_private).length;
 
-          document.getElementById('savedTitle').innerText = "Data Checker";
+          document.getElementById('savedTitle').innerText = localStorage.getItem('dyriee_batch_name') || "Hasil Scan";
           document.getElementById('savedSubtitle').innerHTML = `<strong>${total}</strong> akun &nbsp;<strong>${total}</strong> selesai`;
           document.getElementById('savedBadges').innerHTML = `
             ${korblox > 0 ? `<span class="badge k">K ${korblox}</span>` : ''}
@@ -232,22 +226,21 @@
             <span class="badge rap">RAP ${totalRap.toLocaleString()}</span>
             <span class="badge">${withIp} IP</span>
           `;
-          if (priv > 0) document.getElementById('savedPrivateBadge').innerHTML = `<span class="badge priv">${priv} privat</span>`;
-        } else {
-          document.getElementById('savedTitle').innerText = "Belum ada data";
-          document.getElementById('savedSubtitle').innerText = "Silakan upload file di tab Data baru.";
+          document.getElementById('savedPrivateBadge').innerHTML = priv > 0 ? `<span class="badge priv">${priv} privat</span>` : "";
+          return;
         }
-      } catch (e) {
-        const localScanned = localStorage.getItem('dyriee_scanned_json');
-        if (localScanned) {
-          const parsed = JSON.parse(localScanned);
-          loadedAccounts = parsed;
-          document.getElementById('savedTitle').innerText = localStorage.getItem('dyriee_batch_name') || "Hasil Scan Lokal";
-          document.getElementById('savedSubtitle').innerHTML = `<strong>${parsed.length}</strong> akun tersimpan di browser`;
-        } else {
-          document.getElementById('savedTitle').innerText = "Data Lokal / Offline";
-          document.getElementById('savedSubtitle').innerText = "accounts.json tidak ditemukan.";
-        }
+      }
+
+      loadedAccounts = [];
+      card.style.display = "none";
+      btnOpen.style.display = "none";
+      const emptyMsg = document.getElementById('emptySavedMsg');
+      if (!emptyMsg) {
+        const div = document.createElement('div');
+        div.id = 'emptySavedMsg';
+        div.style.cssText = "text-align:center; padding:28px 16px; background:var(--surface); border:1px dashed var(--border-light); border-radius:16px; color:var(--muted); font-size:13px;";
+        div.innerHTML = "Belum ada data tersimpan.<br><span style='color:var(--cream);font-weight:700;cursor:pointer;' onclick='document.querySelectorAll(".tab")[1].click()'>+ Buat &amp; Scan Data Baru →</span>";
+        document.getElementById('tab-tersimpan').prepend(div);
       }
     }
 
