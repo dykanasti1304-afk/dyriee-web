@@ -193,6 +193,17 @@
       </div>
     </div>
 
+    <button id="btnScanAllWeb" onclick="scanAllAccountsInWeb()" style="width:100%; background:var(--cream); color:#111; border:none; padding:13px; border-radius:12px; font-weight:800; font-size:13.5px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;">⚡ Scan Semua Akun di Web (Email &amp; RAP)</button>
+    <div id="scanProgressWrap" style="display:none; background:var(--surface); border:1px solid var(--border-light); border-radius:12px; padding:12px;">
+      <div style="display:flex; justify-content:space-between; font-size:12px; font-weight:700; margin-bottom:6px;">
+        <span id="scanProgressText" style="color:var(--cream);">Memindai...</span>
+        <span id="scanProgressPct" style="font-family:monospace;">0%</span>
+      </div>
+      <div style="height:6px; background:var(--surface-2); border-radius:99px; overflow:hidden;">
+        <div id="scanProgressBar" style="height:100%; width:0%; background:var(--green); transition:width 0.2s;"></div>
+      </div>
+    </div>
+
     <div class="overview-card">
       <div class="overview-top">
         <div class="ov-pill">📊 OVERVIEW</div>
@@ -670,6 +681,76 @@
       a.download = filename;
       a.click();
       document.getElementById('exportPopover').classList.remove('open');
+    }
+
+    async function scanAllAccountsInWeb() {
+      if (!rawData.length) { alert("Tidak ada akun untuk di-scan."); return; }
+
+      const btn = document.getElementById("btnScanAllWeb");
+      const wrap = document.getElementById("scanProgressWrap");
+      const txt = document.getElementById("scanProgressText");
+      const pct = document.getElementById("scanProgressPct");
+      const bar = document.getElementById("scanProgressBar");
+
+      btn.disabled = true;
+      btn.style.opacity = "0.6";
+      wrap.style.display = "block";
+
+      const batchSize = 15;
+      const total = rawData.length;
+      let updatedList = [];
+
+      try {
+        for (let i = 0; i < total; i += batchSize) {
+          const chunk = rawData.slice(i, i + batchSize).map(a => ({
+            usn: a.usn,
+            pass: a.pw,
+            ip: a.ip
+          }));
+
+          const doneCount = Math.min(i + batchSize, total);
+          const percent = Math.round((i / total) * 100);
+          txt.innerText = `Scanning akun ${i + 1} - ${doneCount} dari ${total}...`;
+          pct.innerText = `${percent}%`;
+          bar.style.width = `${percent}%`;
+
+          const res = await fetch("/api/scan", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ accounts: chunk })
+          });
+
+          if (!res.ok) throw new Error(`Server error ${res.status}`);
+          const data = await res.json();
+          updatedList = updatedList.concat(data.results || []);
+
+          const partialMerged = [
+            ...updatedList,
+            ...rawData.slice(updatedList.length).map(a => ({
+              usn: a.usn, pass: a.pw, ip: a.ip, location: a.country,
+              total_rap: a.rap, avatar_url: a.avatar, limited_found: a.limiteds,
+              has_verified: a.has_verified, is_private: a.isPrivate
+            }))
+          ];
+          rawData = mapAccountList(partialMerged);
+          renderStats();
+          renderCountryAccordion();
+          renderItemAccordion();
+          renderList();
+        }
+
+        pct.innerText = "100%";
+        bar.style.width = "100%";
+        txt.innerText = `Selesai! ${total} akun berhasil di-scan.`;
+        localStorage.setItem("dyriee_scanned_json", JSON.stringify(updatedList));
+        showToast("Semua akun selesai di-scan!");
+      } catch (err) {
+        alert("Proses scan terhenti: " + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.style.opacity = "1";
+        setTimeout(() => { wrap.style.display = "none"; }, 3000);
+      }
     }
 
     loadAccountsData();
