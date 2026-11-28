@@ -785,151 +785,147 @@
       renderStats(); renderList();
     }
 
-    function showDetail(id) {
-      const acc = rawData.find(a => a.id === id);
+    let activeDetailUsn = null;
+    let activeDetailIp = "-";
+
+    function closeAccDetail() {
+      document.getElementById("accDetailOverlay").classList.remove("open");
+      activeDetailUsn = null;
+    }
+
+    function copyAdIp() {
+      if (!activeDetailIp || activeDetailIp === "-") return;
+      copyText(activeDetailIp, "IP disalin!");
+    }
+
+    function saveAdNote() {
+      if (!activeDetailUsn) return;
+      const notes = JSON.parse(localStorage.getItem("dyriee_notes") || "{}");
+      notes[activeDetailUsn] = document.getElementById("adNoteInput").value;
+      localStorage.setItem("dyriee_notes", JSON.stringify(notes));
+      showToast("Catatan disimpan!");
+    }
+
+    function toggleAdFav() {
+      if (!activeDetailUsn) return;
+      toggleStar(activeDetailUsn);
+      const isFav = !!starsMap[activeDetailUsn];
+      const btn = document.getElementById("adFavBtn");
+      btn.classList.toggle("active", isFav);
+      btn.innerText = isFav ? "★ Favorit" : "☆ Favorit";
+    }
+
+    function refreshAdStatusButtons(usn) {
+      const st = statusMap[usn] || "active";
+      document.getElementById("adStValid").classList.toggle("on", st === "valid");
+      document.getElementById("adStInvalid").classList.toggle("on", st === "invalid");
+      document.getElementById("adStSecure").classList.toggle("on", st === "secure");
+      document.getElementById("adStCross").classList.toggle("on", st === "cross");
+    }
+
+    function setAdStatus(st) {
+      if (!activeDetailUsn) return;
+      setStatus(activeDetailUsn, st);
+      refreshAdStatusButtons(activeDetailUsn);
+    }
+
+    async function showDetail(id) {
+      const acc = rawData.find(a => String(a.id) === String(id) || a.usn === String(id));
       if (!acc) return;
-      const limiteds = acc.limitedItems && acc.limitedItems.length > 0 ? acc.limitedItems.map(i => i.rap > 0 ? `${i.name} (${i.rap.toLocaleString()})` : `${i.name} [Bundle]`).join(', ') : '-';
-      document.getElementById('detailPopupBody').innerHTML = `
-        <h2 style="font-size:18px; margin-bottom:12px; text-align:center;">Detail Akun</h2>
-        <div class="detail-row"><span class="detail-label">Username</span><span class="detail-value">${acc.usn}</span></div>
-        <div class="detail-row"><span class="detail-label">Display Name</span><span class="detail-value">${acc.displayName}</span></div>
-        <div class="detail-row"><span class="detail-label">Password</span><span class="detail-value" style="font-family:monospace;">${acc.pw}</span></div>
-        <div class="detail-row"><span class="detail-label">IP Address</span><span class="detail-value" style="font-family:monospace;">${acc.ip}</span></div>
-        <div class="detail-row"><span class="detail-label">Negara</span><span class="detail-value">${acc.country}</span></div>
-        <div class="detail-row"><span class="detail-label">Total RAP</span><span class="detail-value" style="color:var(--cream);">${acc.isPrivate ? 'Private' : acc.rap.toLocaleString()}</span></div>
-        <div class="detail-row"><span class="detail-label">Status Banned</span><span class="detail-value" style="color:${acc.isBanned ? 'var(--red)' : 'var(--green)'};">${acc.isBanned ? 'YA' : 'TIDAK'}</span></div>
-        <div class="detail-row"><span class="detail-label">Email Verified</span><span class="detail-value" style="color:${acc.has_verified ? 'var(--green)' : 'var(--muted)'};">${acc.has_verified ? 'YA (Topi Hijau)' : 'TIDAK'}</span></div>
-        <div class="detail-row"><span class="detail-label">Item Limited</span><span class="detail-value">${limiteds}</span></div>
-      `;
-      document.getElementById('detailPopupOverlay').classList.add('active');
-    }
 
-    function closeDetailPopup() { document.getElementById('detailPopupOverlay').classList.remove('active'); }
+      const usn = acc.usn;
+      activeDetailUsn = usn;
+      activeDetailIp = acc.ip || "-";
 
-    /* Export Popover Logic */
-    function toggleExportMenu(e) {
-      e.stopPropagation();
-      document.getElementById('exportPopover').classList.toggle('open');
-    }
-    document.addEventListener('click', () => {
-      document.getElementById('exportPopover').classList.remove('open');
-    });
+      document.getElementById("adAvatar").src = acc.avatar || "";
+      document.getElementById("adUsn").innerText = "@" + acc.usn;
 
-    function setExportScope(scope, btn) {
-      exportScope = scope;
-      document.querySelectorAll('.scope-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-    }
-
-    function exportData(format) {
-      let targetList = [];
-      if (exportScope === 'shown') targetList = currentFilteredData;
-      else if (exportScope === 'all') targetList = rawData;
-      else if (exportScope === 'valid') targetList = rawData.filter(a => localStatuses[a.id] === 'valid');
-      else if (exportScope === 'invalid') targetList = rawData.filter(a => localStatuses[a.id] === 'invalid');
-
-      if (format === 'fav') {
-        targetList = rawData.filter(a => localStars[a.id]);
-        if (!targetList.length) { alert('Belum ada akun yang dibintangi.'); return; }
-        downloadBlob(targetList.map(a => a.usn).join('\n'), 'dyriee_favorit.txt', 'text/plain');
-        return;
+      const pill = document.getElementById("adMailPill");
+      if (acc.has_verified) {
+        pill.className = "ad-pill mail";
+        pill.innerText = "verif mail";
+      } else {
+        pill.className = "ad-pill nomail";
+        pill.innerText = "unverified";
       }
 
-      if (!targetList.length) { alert('Tidak ada data pada pilihan ini.'); return; }
+      document.getElementById("adRap").innerText = (acc.rap || 0).toLocaleString();
+      document.getElementById("adItemCount").innerText = (acc.limitedItems || []).length;
+      document.getElementById("adIp").innerText = acc.ip || "-";
+      document.getElementById("adLocTop").innerText = "📍 " + (acc.country || "Unknown");
+      document.getElementById("adLocIsp").innerText = "Memuat detail region, kota & ISP...";
 
-      if (format === 'txt') {
-        const content = targetList.map(a => `${a.usn}:${a.pw}:${a.ip}`).join('\n');
-        downloadBlob(content, `dyriee_${exportScope}.txt`, 'text/plain');
-      } else if (format === 'csv') {
-        const header = 'Username,Password,IP,Country,RAP,HasMail,Status\n';
-        const rows = targetList.map(a =>
-          `"${a.usn}","${a.pw}","${a.ip}","${a.country}",${a.rap},${a.has_verified},"${localStatuses[a.id] || 'active'}"`
-        ).join('\n');
-        downloadBlob(header + rows, `dyriee_${exportScope}.csv`, 'text/csv');
-      }
-    }
+      const notes = JSON.parse(localStorage.getItem("dyriee_notes") || "{}");
+      document.getElementById("adNoteInput").value = notes[usn] || "";
 
-    function downloadBlob(content, filename, mime) {
-      const blob = new Blob([content], { type: mime });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = filename;
-      a.click();
-      document.getElementById('exportPopover').classList.remove('open');
-    }
+      const isFav = !!starsMap[usn];
+      const favBtn = document.getElementById("adFavBtn");
+      favBtn.classList.toggle("active", isFav);
+      favBtn.innerText = isFav ? "★ Favorit" : "☆ Favorit";
 
-    async function scanAllAccountsInWeb() {
-      if (!rawData.length) { alert("Tidak ada akun untuk di-scan."); return; }
+      document.getElementById("adCopyUsnBtn").onclick = () => copyText(acc.usn, "USN disalin!");
+      document.getElementById("adCopyPwBtn").onclick = () => copyText(acc.pw, "PW disalin!");
+      refreshAdStatusButtons(usn);
 
-      const btn = document.getElementById("btnScanAllWeb");
-      const wrap = document.getElementById("scanProgressWrap");
-      const txt = document.getElementById("scanProgressText");
-      const pct = document.getElementById("scanProgressPct");
-      const bar = document.getElementById("scanProgressBar");
+      document.getElementById("adWearCount").innerText = "";
+      document.getElementById("adBadgeCount").innerText = "";
+      document.getElementById("adGroupCount").innerText = "";
+      document.getElementById("adWearList").innerHTML = '<div style="font-size:12px; color:var(--muted);">Memuat item yang sedang dipakai...</div>';
+      document.getElementById("adBadgeList").innerHTML = '<div style="font-size:12px; color:var(--muted);">Memuat badge...</div>';
+      document.getElementById("adGroupList").innerHTML = '<div style="font-size:12px; color:var(--muted);">Memuat group...</div>';
 
-      btn.disabled = true;
-      btn.style.opacity = "0.6";
-      wrap.style.display = "block";
-
-      const batchSize = 15;
-      const total = rawData.length;
-      let updatedList = [];
+      document.getElementById("accDetailOverlay").classList.add("open");
 
       try {
-        for (let i = 0; i < total; i += batchSize) {
-          const chunk = rawData.slice(i, i + batchSize).map(a => ({
-            usn: a.usn,
-            pass: a.pw,
-            ip: a.ip
-          }));
+        const res = await fetch("/api/detail", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ usn: acc.usn, ip: acc.ip })
+        });
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        const data = await res.json();
+        if (activeDetailUsn !== usn) return;
 
-          const doneCount = Math.min(i + batchSize, total);
-          const percent = Math.round((i / total) * 100);
-          txt.innerText = `Scanning akun ${i + 1} - ${doneCount} dari ${total}...`;
-          pct.innerText = `${percent}%`;
-          bar.style.width = `${percent}%`;
+        const ipi = data.ip_info || {};
+        const locParts = [ipi.country || acc.country, ipi.region, ipi.city].filter(Boolean);
+        document.getElementById("adLocTop").innerText = "📍 " + (locParts.join(" · ") || "Unknown");
+        document.getElementById("adLocIsp").innerText = ipi.isp || "-";
 
-          const res = await fetch("/api/scan", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ accounts: chunk })
-          });
-
-          if (!res.ok) throw new Error(`Server error ${res.status}`);
-          const data = await res.json();
-          updatedList = updatedList.concat(data.results || []);
-
-          const partialMerged = [
-            ...updatedList,
-            ...rawData.slice(updatedList.length).map(a => ({
-              usn: a.usn, pass: a.pw, ip: a.ip, location: a.country,
-              total_rap: a.rap, avatar_url: a.avatar, limited_found: a.limiteds,
-              has_verified: a.has_verified, is_private: a.isPrivate
-            }))
-          ];
-          rawData = mapAccountList(partialMerged);
-          renderStats();
-          renderCountryAccordion();
-          renderItemAccordion();
-          renderList();
+        const wear = data.wearing || [];
+        document.getElementById("adWearCount").innerText = wear.length + " item";
+        if (wear.length > 0) {
+          document.getElementById("adWearList").innerHTML = wear.map(w =>
+            `<div class="ad-item-card"><img class="ad-item-thumb" src="${w.image || ''}" alt=""><div class="ad-item-name">${w.name}</div></div>`
+          ).join("");
+        } else {
+          document.getElementById("adWearList").innerHTML = '<div style="font-size:12px; color:var(--muted);">Tidak ada aksesoris terpasang.</div>';
         }
 
-        pct.innerText = "100%";
-        bar.style.width = "100%";
-        txt.innerText = `Selesai! ${total} akun berhasil di-scan.`;
-        localStorage.setItem("dyriee_scanned_json", JSON.stringify(updatedList));
-        showToast("Semua akun selesai di-scan!");
+        const badges = data.badges || [];
+        document.getElementById("adBadgeCount").innerText = badges.length + " badge";
+        if (badges.length > 0) {
+          document.getElementById("adBadgeList").innerHTML = badges.map(b =>
+            `<div class="ad-item-card"><img class="ad-item-thumb" src="${b.image || ''}" alt=""><div class="ad-item-name">${b.name}</div></div>`
+          ).join("");
+        } else {
+          document.getElementById("adBadgeList").innerHTML = '<div style="font-size:12px; color:var(--muted);">Tidak ada badge atau inventory private.</div>';
+        }
+
+        const groups = data.groups || [];
+        document.getElementById("adGroupCount").innerText = groups.length + " group";
+        if (groups.length > 0) {
+          document.getElementById("adGroupList").innerHTML = groups.map(g =>
+            `<div class="ad-group-row"><div><div class="ad-group-name">${g.name}</div><div class="ad-group-meta">${(g.members || 0).toLocaleString()} members</div></div><span class="ad-group-role">${g.role}</span></div>`
+          ).join("");
+        } else {
+          document.getElementById("adGroupList").innerHTML = '<div style="font-size:12px; color:var(--muted);">Tidak bergabung di group manapun.</div>';
+        }
       } catch (err) {
-        alert("Proses scan terhenti: " + err.message);
-      } finally {
-        btn.disabled = false;
-        btn.style.opacity = "1";
-        setTimeout(() => { wrap.style.display = "none"; }, 3000);
+        document.getElementById("adLocIsp").innerText = "Gagal memuat detail tambahan.";
       }
     }
 
-    loadAccountsData();
-  </script>
+    </script>
 
   <div class="acc-detail-overlay" id="accDetailOverlay">
     <div class="acc-detail-inner">
