@@ -1108,6 +1108,19 @@
       }
     }
 
+  
+    // Override showDetail lama supaya membuka halaman detail penuh
+    const _oldShowDetail = typeof showDetail === "function" ? showDetail : null;
+    showDetail = function(id) {
+      const list = (typeof rawData !== "undefined" ? rawData : []);
+      const acc = list.find(a => String(a.id) === String(id) || a.usn === String(id));
+      if (acc && typeof openAccDetailByUsn === "function") {
+        openAccDetailByUsn(acc.usn);
+      } else if (_oldShowDetail) {
+        _oldShowDetail(id);
+      }
+    };
+
   </script>
 </body>
 </html>
