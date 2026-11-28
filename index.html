@@ -189,7 +189,7 @@
 
     function openSelectedBatch() {
       if (!isCardSelected) { alert('Centang data terlebih dahulu untuk membukanya.'); return; }
-      window.location.href = 'batch.html';
+      window.location.href = 'batch.html?v=' + Date.now();
     }
 
     function loadAccountsData() {
@@ -305,7 +305,7 @@
         localStorage.setItem('dyriee_scanned_json', JSON.stringify(allResults));
         localStorage.setItem('dyriee_batch_name', batchName);
 
-        if (redirect) window.location.href = 'batch.html';
+        if (redirect) window.location.href = 'batch.html?v=' + Date.now();
       } catch (err) {
         alert("Gagal terhubung ke /api/scan (" + err.message + "). Data disimpan tanpa scan.");
         const fallback = parsed.map(p => ({
@@ -313,7 +313,7 @@
           total_rap: 0, limited_found: [], limited_items: [], has_verified: false, is_private: false
         }));
         localStorage.setItem('dyriee_scanned_json', JSON.stringify(fallback));
-        if (redirect) window.location.href = 'batch.html';
+        if (redirect) window.location.href = 'batch.html?v=' + Date.now();
       } finally {
         btn.innerText = oldText;
         btn.disabled = false;
