@@ -277,6 +277,13 @@
         };
       }).filter(a => a.usn !== '');
 
+      const batchNameInit = document.getElementById('namaData').value.trim() || ('Hasil Scan (' + parsed.length + ')');
+      localStorage.setItem('dyriee_batch_name', batchNameInit);
+      localStorage.setItem('dyriee_scanned_json', JSON.stringify(parsed.map(p => ({
+        usn: p.usn, pass: p.pass, ip: p.ip, location: "Unknown",
+        total_rap: 0, bundle_value: 0, limited_found: [], limited_items: [], has_verified: false, is_private: false
+      }))));
+
       try {
         let allResults = [];
         for (let i = 0; i < parsed.length; i += 15) {
