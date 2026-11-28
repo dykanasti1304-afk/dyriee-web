@@ -1,10 +1,11 @@
+import time
 from http.server import BaseHTTPRequestHandler
 import json
 import urllib.request
 import urllib.error
 import concurrent.futures
 
-VERIFIED_ITEM_ID = 102611803
+VERIFIED_ITEM_IDS = [102611803, 1567446]
 
 # Bundle ID resmi Roblox + harga Robux-nya (bukan RAP)
 BUNDLES = {
@@ -44,6 +45,8 @@ def req_json(url, method="GET", payload=None, timeout=6):
         with urllib.request.urlopen(req, timeout=timeout) as res:
             return res.status, json.loads(res.read().decode("utf-8"))
     except urllib.error.HTTPError as e:
+        if e.code == 429:
+            time.sleep(0.4)
         return e.code, None
     except Exception:
         return 500, None
@@ -87,7 +90,13 @@ def scan_one(acc):
         out["avatar_url"] = av["data"][0].get("imageUrl", "")
 
     # 1. Cek Topi Hijau Verifikasi Email
-    out["has_verified"] = has_item(uid, "Asset", VERIFIED_ITEM_ID)
+    # Cek semua varian Topi Hijau / Sign verifikasi email (102611803 & 1567446)
+    verified = False
+    for vid in VERIFIED_ITEM_IDS:
+        if has_item(uid, "Asset", vid):
+            verified = True
+            break
+    out["has_verified"] = verified
 
     found_names = []
     limited_items = []
