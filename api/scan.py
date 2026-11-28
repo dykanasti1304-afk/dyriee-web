@@ -226,7 +226,7 @@ class handler(BaseHTTPRequestHandler):
             global PREFETCH_USERS, PREFETCH_AVATARS
             PREFETCH_USERS = bulk_resolve_users([a.get("usn","") for a in accounts])
             PREFETCH_AVATARS = bulk_avatars([u.get("id") for u in PREFETCH_USERS.values()])
-            with concurrent.futures.ThreadPoolExecutor(max_workers=6) as ex:
+            with concurrent.futures.ThreadPoolExecutor(max_workers=15) as ex:
                 results = list(ex.map(scan_one, accounts))
 
             self.send_response(200)
