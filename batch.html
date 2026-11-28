@@ -555,10 +555,10 @@
       const allItems = Object.entries(itemMap).sort((a, b) => b[1].rap - a[1].rap || b[1].count - a[1].count);
       document.getElementById('itemBadge').innerText = `${allItems.length} ITEM`;
       const filteredItems = allItems.filter(([name]) => name.toLowerCase().includes(q));
-      let html = `<div class="list-bar-item ${currentItem === 'all' ? 'active' : ''}" onclick="setItem('all')"><span>Semua Item</span><span>${rawData.length}</span></div>`;
+      let html = `<div class="list-bar-item ${currentItem === 'all' ? 'active' : ''}" onclick="setItem('all')"><span>Semua Item</span><span>${rawData.length} akun</span></div>`;
       filteredItems.forEach(([name, info]) => {
         const rapLabel = info.rap > 0 ? `<span style="color:var(--cream);margin-right:10px;">${info.rap.toLocaleString()}</span>` : `<span style="color:var(--purple);margin-right:10px;">BUNDLE</span>`;
-        html += `<div class="list-bar-item ${currentItem === name ? 'active' : ''}" onclick="setItem('${name.replace(/'/g, "\\'")}')"><span>${name}</span><span style="font-family:monospace;font-weight:700;">${rapLabel}${info.count}</span></div>`;
+        html += `<div class="list-bar-item ${currentItem === name ? 'active' : ''}" onclick="setItem('${name.replace(/'/g, "\\'")}')"><span>${name}</span><span style="font-family:monospace;font-weight:700;">${rapLabel}${info.count} akun</span></div>`;
       });
       container.innerHTML = html;
     }
