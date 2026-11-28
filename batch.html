@@ -479,7 +479,8 @@
 
   <div class="toast" id="toast">Tersalin!</div>
 
-  <div class="acc-detail-overlay" id="accDetailOverlay">
+  
+<div class="acc-detail-overlay" id="accDetailOverlay">
     <div class="acc-detail-inner">
       <div class="ad-header">
         <div class="ad-profile">
@@ -524,23 +525,17 @@
 
       <div>
         <div class="ad-sec-title"><span>SEDANG DIPAKAI</span><span id="adWearCount" style="font-family:monospace;"></span></div>
-        <div class="ad-hscroll" id="adWearList">
-          <div style="font-size:12px; color:var(--muted);">Memuat item avatar...</div>
-        </div>
+        <div class="ad-hscroll" id="adWearList"></div>
       </div>
 
       <div>
         <div class="ad-sec-title"><span>BADGE ROBLOX</span><span id="adBadgeCount" style="font-family:monospace;"></span></div>
-        <div class="ad-hscroll" id="adBadgeList">
-          <div style="font-size:12px; color:var(--muted);">Memuat badge...</div>
-        </div>
+        <div class="ad-hscroll" id="adBadgeList"></div>
       </div>
 
       <div>
         <div class="ad-sec-title"><span>GROUP</span><span id="adGroupCount" style="font-family:monospace;"></span></div>
-        <div class="ad-group-list" id="adGroupList">
-          <div style="font-size:12px; color:var(--muted);">Memuat group...</div>
-        </div>
+        <div class="ad-group-list" id="adGroupList"></div>
       </div>
 
       <div class="ad-actions-grid">
@@ -590,8 +585,7 @@
     function init() {
       const bName = localStorage.getItem('dyriee_batch_name');
       const subEl = document.getElementById('batchSubtitle');
-      const rawLen = (localStorage.getItem("dyriee_scanned_json") || "").length;
-      if (subEl) subEl.innerText = (bName || "NoName") + " (cache:" + rawLen + ")";
+      if (bName && subEl) subEl.innerText = bName;
 
       const keys = ['dyriee_scanned_json', 'dyriee_accounts', 'dyriee_data'];
       for (const k of keys) {
