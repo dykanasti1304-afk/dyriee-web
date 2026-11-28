@@ -283,11 +283,12 @@
     <div class="overview-card">
       <div class="overview-top">
         <div class="ov-pill">📊 OVERVIEW</div>
-        <button class="detail-toggle" id="detailBtn" onclick="toggleDetail()">DETAIL ⌄</button>
+        <div class="detail-toggle" id="detailToggleBtn" onclick="toggleDetail()">DETAIL ⌄</div>
       </div>
       <div class="ov-sub-label">TOTAL AKUN</div>
       <div class="total-number" id="statTotal">0</div>
       <div class="overview-sub" id="statSub">0 dicek · 0 belum · 0 private</div>
+
       <div class="detail-grid" id="detailGrid">
         <div class="rap-highlight-box">
           <div class="rap-icon-box">
@@ -332,18 +333,6 @@
             <div class="m-icon" style="color:#34d399;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="22,6 12,13 2,6"/></svg></div>
             <div><div class="m-label">HAS MAIL</div><div class="m-val" id="statHasMail">0</div></div>
           </div>
-        </div>
-      </div>
-    </div>
-        <div class="metrics-2col">
-          <div class="metric-box"><div class="m-icon" style="color:var(--green);">✓</div><div><div class="m-label">VALID</div><div class="m-val" id="statValidDetail" style="color:var(--green);">0</div></div></div>
-          <div class="metric-box"><div class="m-icon" style="color:var(--red);">✕</div><div><div class="m-label">INVALID</div><div class="m-val" id="statInvalidDetail" style="color:var(--red);">0</div></div></div>
-          <div class="metric-box"><div class="m-icon" style="color:var(--blue);">🛡</div><div><div class="m-label">SECURE</div><div class="m-val" id="statSecureDetail" style="color:var(--blue);">0</div></div></div>
-          <div class="metric-box"><div class="m-icon" style="color:var(--amber);">⚠</div><div><div class="m-label">CROSS</div><div class="m-val" id="statCrossDetail" style="color:var(--amber);">0</div></div></div>
-          <div class="metric-box"><div class="m-icon" style="color:#fbbf24;">👤</div><div><div class="m-label">HEADLESS</div><div class="m-val" id="statHeadless">0</div></div></div>
-          <div class="metric-box"><div class="m-icon" style="color:var(--purple);">🦴</div><div><div class="m-label">KORBLOX</div><div class="m-val" id="statKorblox">0</div></div></div>
-          <div class="metric-box"><div class="m-icon" style="color:var(--blue);">💎</div><div><div class="m-label">MALIVINIUS</div><div class="m-val" id="statMalivinius">0</div></div></div>
-          <div class="metric-box" style="grid-column: 1 / -1;"><div class="m-icon" style="color:var(--green);">✉</div><div><div class="m-label">HAS MAIL</div><div class="m-val" id="statHasMail">0</div></div></div>
         </div>
       </div>
     </div>
