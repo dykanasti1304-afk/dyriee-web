@@ -1196,6 +1196,27 @@
       if (typeof showToast === "function") showToast(`Selesai! Ditemukan ${mailCount} akun MAIL`);
     }
 
+  
+    // === Alur Berurutan: Tahap 1 Cek Email -> Tahap 2 Cek RAP ===
+    async function runSequentialEmailThenRap() {
+      const btn = document.getElementById("btnScanSequential");
+      if (btn) btn.disabled = true;
+      try {
+        // Tahap 1: Cek Email semua akun sampai tuntas
+        await fastVerifyAllDirect();
+        // Jeda 500ms sebelum masuk Tahap 2 agar koneksi bersih
+        await new Promise(r => setTimeout(r, 500));
+        // Tahap 2: Lanjut cek RAP & Limited
+        await scanRapOnlyBatch();
+        if (typeof showToast === "function") showToast("Semua selesai! Email & RAP sudah ter-update.");
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerText = "⚡ Scan Berurutan (1. Email Dulu → 2. RAP)";
+        }
+      }
+    }
+
   </script>
 </body>
 </html>
