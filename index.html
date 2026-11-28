@@ -4,235 +4,58 @@
 <script>
 (function() {
   const origFetch = window.fetch.bind(window);
-  const VERIFIED_IDS = [102611803, 1567446];
-  const WORN_SPECIAL = {
-    139607718: ["Korblox Deathspeaker", 17000],
-    139607673: ["Korblox Deathspeaker", 17000],
-    139607570: ["Korblox Deathspeaker", 17000],
-    139607625: ["Korblox Deathspeaker", 17000],
-    139607770: ["Korblox Deathspeaker", 17000],
-    1509305368: ["Headless Horseman", 31000],
-    134082579: ["Headless Horseman", 31000],
-    2807146071: ["Malivinius", 300],
-    2807143328: ["Malivinius", 300],
-    2807147467: ["Malivinius", 300],
-    2807149259: ["Malivinius", 300],
-    1402432199: ["Violet Valkyrie", 50000],
-    124730194: ["Blackvalk", 25000],
-    151789690: ["Ice Valkyrie", 45000],
-    1365767: ["Valkyrie Helm", 20000],
-    8329438: ["Stitchface", 4000],
-    131144461: ["Extreme Headphones", 7500],
-    1235488: ["Clockwork's Headphones", 15000],
-    1029025: ["Workclock Headphones", 3000]
-  };
 
-  async function rbxGet(url, retries = 4) {
-    for (let i = 0; i <= retries; i++) {
-      try {
-        const res = await origFetch(url);
-        if (res.status === 429) {
-          await new Promise(r => setTimeout(r, 400 * (i + 1)));
-          continue;
-        }
-        if (res.status === 403) return { status: 403, data: null };
-        if (!res.ok) return { status: res.status, data: null };
+  async function callSubChunk(url, subAccounts, depth) {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 8500);
+    try {
+      const res = await origFetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ accounts: subAccounts }),
+        signal: ctrl.signal
+      });
+      clearTimeout(timer);
+      if (res.ok) {
         const data = await res.json();
-        return { status: 200, data };
-      } catch (e) {
-        if (i < retries) {
-          await new Promise(r => setTimeout(r, 250 * (i + 1)));
-          continue;
-        }
-        return { status: 0, data: null };
+        if (data && Array.isArray(data.results)) return data.results;
       }
+    } catch (e) {
+      clearTimeout(timer);
     }
-    return { status: 429, data: null };
+
+    // Jika timeout / error, pecah jadi dua supaya tidak pernah macet
+    if (subAccounts.length > 1 && depth < 3) {
+      const mid = Math.ceil(subAccounts.length / 2);
+      const [left, right] = await Promise.all([
+        callSubChunk(url, subAccounts.slice(0, mid), depth + 1),
+        callSubChunk(url, subAccounts.slice(mid), depth + 1)
+      ]);
+      return left.concat(right);
+    }
+
+    return subAccounts.map(a => ({
+      usn: a.usn, pw: a.pw || "", ip: a.ip || "",
+      has_verified: false, total_rap: 0, bundle_value: 0,
+      limited_items: [], is_private: false, avatar: "", location: "-"
+    }));
   }
 
-  async function checkInvItem(uid, type, id) {
-    const r = await rbxGet(`https://inventory.roblox.com/v1/users/${uid}/items/${type}/${id}`, 3);
-    return r.status === 200 && r.data && Array.isArray(r.data.data) && r.data.data.length > 0;
-  }
-
-  async function scanSingleClient(meta) {
-    const out = {
-      usn: meta.usn,
-      pw: meta.pw || "",
-      ip: meta.ip || "",
-      uid: meta.uid || null,
-      has_verified: false,
-      total_rap: 0,
-      bundle_value: 0,
-      limited_items: [],
-      is_private: false,
-      avatar: meta.avatar || "",
-      location: meta.location || "-",
-      _needsFallback: false
-    };
-    if (!out.uid) return out;
-
-    const foundNames = new Set();
-    let bundleVal = 0;
-    const limitedItems = [];
-
-    const [colRes, avRes] = await Promise.all([
-      rbxGet(`https://inventory.roblox.com/v1/users/${out.uid}/assets/collectibles?limit=100`, 4),
-      rbxGet(`https://avatar.roblox.com/v1/users/${out.uid}/avatar`, 3)
-    ]);
-
-    if (colRes.status === 0 || colRes.status === 429) {
-      out._needsFallback = true;
-      return out;
-    }
-
-    if (avRes.status === 200 && avRes.data && Array.isArray(avRes.data.assets)) {
-      for (const a of avRes.data.assets) {
-        const aid = a.id;
-        const aname = (a.name || "").toLowerCase();
-        if (VERIFIED_IDS.includes(aid)) out.has_verified = true;
-        if (WORN_SPECIAL[aid]) {
-          const [nm, val] = WORN_SPECIAL[aid];
-          if (!foundNames.has(nm)) {
-            foundNames.add(nm);
-            bundleVal += val;
-            limitedItems.push({ name: nm, rap: val, is_bundle: true });
-          }
-        } else if (aname.includes("malivinius") && !foundNames.has("Malivinius")) {
-          foundNames.add("Malivinius");
-          bundleVal += 300;
-          limitedItems.push({ name: "Malivinius", rap: 300, is_bundle: true });
-        }
-      }
-    }
-
-    if (colRes.status === 403) {
-      out.is_private = true;
-      out.bundle_value = bundleVal;
-      out.limited_items = limitedItems;
-      return out;
-    }
-
-    if (colRes.status === 200 && colRes.data && Array.isArray(colRes.data.data)) {
-      for (const it of colRes.data.data) {
-        const nm = it.name || "Limited Item";
-        const rap = Number(it.recentAveragePrice || 0);
-        out.total_rap += rap;
-        limitedItems.push({ name: nm, rap, is_bundle: false });
-      }
-    }
-
-    // Cek Topi Hijau, Korblox, Headless, & Malivinius di tas (hanya untuk akun non-private)
-    const checks = [];
-    if (!out.has_verified) {
-      checks.push(
-        Promise.all([checkInvItem(out.uid, "Asset", 102611803), checkInvItem(out.uid, "Asset", 1567446)])
-          .then(([h1, h2]) => { if (h1 || h2) out.has_verified = true; })
-      );
-    }
-    if (!foundNames.has("Korblox Deathspeaker")) {
-      checks.push(
-        Promise.all([checkInvItem(out.uid, "Bundle", 192), checkInvItem(out.uid, "Asset", 139607718)])
-          .then(([b, a]) => {
-            if (b || a) {
-              foundNames.add("Korblox Deathspeaker");
-              bundleVal += 17000;
-              limitedItems.push({ name: "Korblox Deathspeaker", rap: 17000, is_bundle: true });
-            }
-          })
-      );
-    }
-    if (!foundNames.has("Headless Horseman")) {
-      checks.push(
-        Promise.all([checkInvItem(out.uid, "Bundle", 201), checkInvItem(out.uid, "Asset", 134082579)])
-          .then(([b, a]) => {
-            if (b || a) {
-              foundNames.add("Headless Horseman");
-              bundleVal += 31000;
-              limitedItems.push({ name: "Headless Horseman", rap: 31000, is_bundle: true });
-            }
-          })
-      );
-    }
-    if (!foundNames.has("Malivinius")) {
-      checks.push(
-        Promise.all([checkInvItem(out.uid, "Bundle", 334), checkInvItem(out.uid, "Asset", 2807146071)])
-          .then(([b, a]) => {
-            if (b || a) {
-              foundNames.add("Malivinius");
-              bundleVal += 300;
-              limitedItems.push({ name: "Malivinius", rap: 300, is_bundle: true });
-            }
-          })
-      );
-    }
-
-    await Promise.all(checks);
-    out.bundle_value = bundleVal;
-    out.limited_items = limitedItems;
-    return out;
-  }
-
-  async function hybridScanHandler(url, options) {
+  async function parallelScanHandler(url, options) {
     let payload = {};
     try { payload = JSON.parse(options.body || "{}"); } catch (e) {}
     const accounts = Array.isArray(payload.accounts) ? payload.accounts : [];
     if (!accounts.length) return origFetch(url, options);
 
-    // 1. Ambil User ID, Avatar, dan Negara IP seluruh batch sekaligus dari server (~0.4 detik)
-    let metas = accounts.map(a => ({ usn: a.usn, pw: a.pw || "", ip: a.ip || "" }));
-    try {
-      const mRes = await origFetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ accounts, mode: "meta" })
-      });
-      if (mRes.ok) {
-        const mJson = await mRes.json();
-        if (Array.isArray(mJson.results)) metas = mJson.results;
-      }
-    } catch (e) {}
-
-    // 2. Scan Roblox APIs dari browser HP dengan pool 10 worker + wajib retry 429
-    const results = new Array(metas.length);
-    let cursor = 0;
-    const concurrency = 10;
-    const workers = Array.from({ length: Math.min(concurrency, metas.length) }, async () => {
-      while (true) {
-        const idx = cursor++;
-        if (idx >= metas.length) break;
-        results[idx] = await scanSingleClient(metas[idx]);
-      }
-    });
-    await Promise.all(workers);
-
-    // 3. Jika ada akun yang gagal CORS/429 di browser, lempar ke server fallback
-    const fallbackIdxs = [];
-    const fallbackAccs = [];
-    results.forEach((r, i) => {
-      if (r && r._needsFallback) {
-        fallbackIdxs.push(i);
-        fallbackAccs.push(accounts[i]);
-      } else if (r) {
-        delete r._needsFallback;
-      }
-    });
-
-    if (fallbackAccs.length > 0) {
-      try {
-        const fRes = await origFetch(url, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ accounts: fallbackAccs, mode: "full" })
-        });
-        if (fRes.ok) {
-          const fJson = await fRes.json();
-          (fJson.results || []).forEach((fr, j) => {
-            results[fallbackIdxs[j]] = fr;
-          });
-        }
-      } catch (e) {}
+    // Pecah 30 akun menjadi 3 sub-paket berisi 10 akun yang jalan serentak di 3 server Vercel berbeda
+    const subSize = 10;
+    const groups = [];
+    for (let i = 0; i < accounts.length; i += subSize) {
+      groups.push(accounts.slice(i, i + subSize));
     }
+
+    const parts = await Promise.all(groups.map(g => callSubChunk(url, g, 0)));
+    const results = parts.flat();
 
     return new Response(JSON.stringify({ results }), {
       status: 200,
@@ -243,12 +66,13 @@
   window.fetch = function(input, options) {
     const urlStr = typeof input === "string" ? input : (input && input.url) || "";
     if (urlStr.includes("/api/scan") && options && options.method === "POST") {
-      return hybridScanHandler(input, options);
+      return parallelScanHandler(input, options);
     }
     return origFetch(input, options);
   };
 })();
 </script>
+
 
 
   <meta charset="utf-8" />
@@ -280,7 +104,7 @@
     .user-name { font-size: 13px; color: var(--muted); font-weight: 500; }
     .btn-logout { width: 34px; height: 34px; background: var(--surface); border: 1px solid var(--border); border-radius: 9px; display: flex; align-items: center; justify-content: center; color: var(--muted); cursor: pointer; }
 
-    .title-area h2 { font-family: 'Pixelify Sans', sans-serif; font-size: 32px; font-weight: 700; color: #fff; line-height: 1.50; letter-spacing: 0.5px; }
+    .title-area h2 { font-family: 'Pixelify Sans', sans-serif; font-size: 32px; font-weight: 700; color: #fff; line-height: 1.30; letter-spacing: 0.5px; }
     .title-area h2 span { color: var(--cream); }
     .title-area p { color: var(--muted); font-size: 13.5px; line-height: 1.5; margin-top: 8px; }
 
@@ -311,7 +135,7 @@
     .icon-action { background: none; border: none; color: var(--muted); cursor: pointer; padding: 4px; }
 
     .btn-primary { background: var(--cream); color: #111; font-weight: 700; border: none; padding: 15px; border-radius: 13px; font-size: 14px; cursor: pointer; width: 100%; transition: all 0.2s; }
-    .btn-primary:disabled { opacity: 0.50; cursor: not-allowed; }
+    .btn-primary:disabled { opacity: 0.30; cursor: not-allowed; }
     .btn-primary.muted-btn { background: var(--cream-dark); color: #111; }
     .btn-danger { background: var(--surface); border: 1px solid var(--border-light); color: #d4d4d8; padding: 13px; border-radius: 13px; font-size: 13px; font-weight: 600; cursor: pointer; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; }
     .footer-hint { text-align: center; font-size: 12px; color: var(--muted); margin-top: 4px; }
@@ -352,7 +176,7 @@
     </div>
 
     <div id="tab-tersimpan" class="tab-content active">
-      <div id="emptySavedMsg" style="display:none; text-align:center; padding:28px 16px; background:var(--surface); border:1px dashed var(--border-light); border-radius:16px; color:var(--muted); font-size:13px; line-height:1.50;">
+      <div id="emptySavedMsg" style="display:none; text-align:center; padding:28px 16px; background:var(--surface); border:1px dashed var(--border-light); border-radius:16px; color:var(--muted); font-size:13px; line-height:1.30;">
         Belum ada data tersimpan.<br>
         <span style="color:var(--cream); font-weight:700; cursor:pointer;" onclick="goNewTab()">+ Buat &amp; Scan Data Baru →</span>
       </div>
@@ -529,9 +353,9 @@
 
       try {
         let allResults = [];
-        for (let i = 0; i < parsed.length; i += 50) {
-          const chunk = parsed.slice(i, i + 50);
-          btn.innerText = 'Scanning (' + Math.min(i + 50, parsed.length) + '/' + parsed.length + ')...';
+        for (let i = 0; i < parsed.length; i += 30) {
+          const chunk = parsed.slice(i, i + 30);
+          btn.innerText = 'Scanning (' + Math.min(i + 30, parsed.length) + '/' + parsed.length + ')...';
 
           const res = await fetch('/api/scan', {
             method: 'POST',
