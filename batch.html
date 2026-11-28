@@ -512,7 +512,7 @@
       </div>
       <div class="ad-actions-grid">
         <button class="ad-act-btn primary" id="adCopyUsnBtn">📋 Salin USN</button>
-        <button class="ad-act-btn" id="adCopyPwBtn">🔑 Salin PW</button>
+        <button class="ad-act-btn" id="adCopyPwBtn">🔑 Salin PW</button><button onclick="openAccountDetail('${acc.usn}')" style="padding:8px 10px; border-radius:8px; border:1px solid rgba(255,255,255,0.14); background:rgba(255,255,255,0.06); color:#f5f5f4; font-weight:700; font-size:12px; cursor:pointer;">🔍 Detail</button>
             <button class="btn-copy" style="padding: 0 12px; background: var(--card2); border: 1px solid var(--border); color: var(--cream);" onclick="event.stopPropagation(); openAccDetailByUsn('${acc.usn}')">🔍 Detail</button>
         <button class="ad-act-btn st-valid" id="adStValid" onclick="setAdStatus('valid')">✓ Valid</button>
         <button class="ad-act-btn st-invalid" id="adStInvalid" onclick="setAdStatus('invalid')">✕ Invalid</button>
@@ -803,7 +803,7 @@
             </div>
             <div class="acc-actions" style="display:grid; grid-template-columns: 1fr 1fr auto; gap:8px;">
               <button class="btn-copy" onclick="event.stopPropagation(); copyText('${acc.usn.replace(/'/g, "\\'")}', 'USN Disalin!')">❏ Salin USN</button>
-              <button class="btn-copy pw" onclick="event.stopPropagation(); copyText('${acc.pw.replace(/'/g, "\\'")}', 'PW Disalin!')">⚷ Salin PW</button>
+              <button class="btn-copy pw" onclick="event.stopPropagation(); copyText('${acc.pw.replace(/'/g, "\\'")}', 'PW Disalin!')">⚷ Salin PW</button><button onclick="openAccountDetail('${acc.usn}')" style="padding:8px 10px; border-radius:8px; border:1px solid rgba(255,255,255,0.14); background:rgba(255,255,255,0.06); color:#f5f5f4; font-weight:700; font-size:12px; cursor:pointer;">🔍 Detail</button>
             </div>
             <div class="status-actions">
               <button class="btn-status ${currentStatus === 'valid' ? 'active-valid' : ''}" onclick="event.stopPropagation(); setStatus(${acc.id}, 'valid')"><span>✓</span>VALID</button>
@@ -1217,6 +1217,87 @@
       }
     }
 
+  
+    async function openAccountDetail(usn) {
+      const modal = document.getElementById("dyrieeDetailModal");
+      const body = document.getElementById("dyrieeDetailBody");
+      if (!modal || !body) return;
+      const acc = (accountsData || []).find(a => a.usn === usn) || { usn };
+      modal.style.display = "flex";
+
+      const renderModal = (extra = {}) => {
+        const isMail = Boolean(acc.has_verified || extra.has_verified);
+        const isPriv = Boolean(acc.is_private || extra.is_private);
+        const rap = Math.max(Number(acc.total_rap || 0), Number(extra.total_rap || 0));
+        const bVal = Math.max(Number(acc.bundle_value || 0), Number(extra.bundle_value || 0));
+        const totalVal = rap + bVal;
+        const avatar = extra.avatar || acc.avatar || "";
+        const created = extra.created || acc.created || "Memuat...";
+        const uid = extra.uid || acc.uid || "-";
+        const loc = (extra.location && extra.location !== "-") ? extra.location : (acc.location || "-");
+        const items = (extra.items && extra.items.length) ? extra.items : (acc.limited_items || []);
+
+        const itemsHtml = items.length
+          ? items.map(it => `<div style="display:flex; justify-content:space-between; padding:7px 10px; background:rgba(255,255,255,0.04); border-radius:8px; margin-bottom:6px; font-size:12px;">
+              <span>${it.name}</span>
+              <span style="color:#fde047; font-weight:700;">${Number(it.rap || 0).toLocaleString()} RAP</span>
+            </div>`).join("")
+          : `<div style="font-size:12px; color:#a8a29e; padding:8px 0;">${isPriv ? "Inventory terkunci (Private)" : "Tidak ada item Limited / Bundle spesial"}</div>`;
+
+        body.innerHTML = `
+          <div style="display:flex; gap:12px; align-items:center; margin-bottom:14px;">
+            <img src="${avatar}" onerror="this.style.display='none'" style="width:56px; height:56px; border-radius:12px; background:#262523; object-fit:cover;">
+            <div>
+              <div style="font-size:16px; font-weight:700;">${acc.usn}</div>
+              <div style="font-size:12px; color:#a8a29e;">ID: ${uid} • Dibuat: ${created}</div>
+              <div style="display:flex; gap:6px; margin-top:6px; flex-wrap:wrap;">
+                <span style="font-size:11px; font-weight:700; padding:2px 8px; border-radius:6px; background:${isMail ? 'rgba(16,185,129,0.2)' : 'rgba(255,255,255,0.08)'}; color:${isMail ? '#6ee7b7' : '#d6d3d1'};">${isMail ? 'MAIL' : 'DATPOL/DATPEN'}</span>
+                ${isPriv ? '<span style="font-size:11px; font-weight:700; padding:2px 8px; border-radius:6px; background:rgba(244,63,94,0.2); color:#fda4af;">PRIVATE</span>' : ''}
+              </div>
+            </div>
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:14px;">
+            <div style="background:rgba(255,255,255,0.04); padding:10px; border-radius:10px;">
+              <div style="font-size:11px; color:#a8a29e;">TOTAL NILAI / RAP</div>
+              <div style="font-size:15px; font-weight:700; color:#fde047;">${totalVal.toLocaleString()}</div>
+            </div>
+            <div style="background:rgba(255,255,255,0.04); padding:10px; border-radius:10px;">
+              <div style="font-size:11px; color:#a8a29e;">NEGARA IP</div>
+              <div style="font-size:13px; font-weight:600;">${loc}</div>
+            </div>
+          </div>
+          <div style="font-size:11px; color:#a8a29e; margin-bottom:6px; font-weight:700;">CREDENTIAL</div>
+          <div style="background:rgba(255,255,255,0.04); padding:9px 10px; border-radius:8px; font-family:monospace; font-size:12px; margin-bottom:14px; word-break:break-all;">
+            ${acc.usn}:${acc.pw || ''}${acc.ip ? ':' + acc.ip : ''}
+          </div>
+          <div style="font-size:11px; color:#a8a29e; margin-bottom:6px; font-weight:700;">DAFTAR ITEM LIMITED & BUNDLE</div>
+          ${itemsHtml}
+        `;
+      };
+
+      renderModal();
+      try {
+        const res = await fetch(`/api/detail?usn=${encodeURIComponent(acc.usn)}&ip=${encodeURIComponent(acc.ip || "")}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.has_verified) acc.has_verified = true;
+          if (data.avatar) acc.avatar = data.avatar;
+          renderModal(data);
+        }
+      } catch (e) {}
+    }
+
   </script>
+
+<div id="dyrieeDetailModal" onclick="if(event.target===this)this.style.display='none'" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.78); z-index:9999; align-items:center; justify-content:center; padding:16px;">
+  <div style="background:#141312; border:1px solid rgba(255,255,255,0.12); border-radius:16px; width:100%; max-width:420px; max-height:85vh; overflow-y:auto; padding:18px; color:#f5f5f4; font-family:inherit; box-shadow:0 20px 50px rgba(0,0,0,0.6);">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+      <strong style="font-size:15px; letter-spacing:0.3px;">🔍 Detail Akun</strong>
+      <button onclick="document.getElementById('dyrieeDetailModal').style.display='none'" style="background:rgba(255,255,255,0.08); border:none; color:#fff; width:28px; height:28px; border-radius:8px; cursor:pointer; font-weight:700;">✕</button>
+    </div>
+    <div id="dyrieeDetailBody">Memuat detail...</div>
+  </div>
+</div>
+
 </body>
 </html>
