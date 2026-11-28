@@ -783,8 +783,8 @@
 
         return `
           <div class="acc-card">
-            <button class="star-btn ${isStarred ? 'starred' : ''}" onclick="toggleStar(${acc.id})">${isStarred ? '★' : '☆'}</button>
-            <div class="acc-top" onclick="showDetail(${acc.id})">
+            <button class="star-btn ${isStarred ? 'starred' : ''}" onclick="openAccDetailByUsn('${acc.usn}')">${isStarred ? '★' : '☆'}</button>
+            <div class="acc-top" onclick="openAccDetailByUsn('${acc.usn}')">
               <img class="acc-avatar" src="${acc.avatar}" onerror="this.src='${DEFAULT_AVATAR}'">
               <div class="acc-info">
                 <div class="acc-name">${acc.usn}</div>
