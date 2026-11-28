@@ -316,7 +316,7 @@
       </div>
     </div>
 
-    <button id="btnScanAllWeb" onclick="scanAllAccountsInWeb()" style="width:100%; background:var(--cream); color:#111; border:none; padding:13px; border-radius:12px; font-weight:800; font-size:13.5px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;">⚡ Scan Semua Akun di Web (Email &amp; RAP)</button>
+    <button id="btnScanAllWeb" onclick="fastVerifyAllDirect(); scanAllAccountsInWeb()" style="width:100%; background:var(--cream); color:#111; border:none; padding:13px; border-radius:12px; font-weight:800; font-size:13.5px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;">⚡ Scan Semua Akun di Web (Email &amp; RAP)</button>
     <div id="scanProgressWrap" style="display:none; background:var(--surface); border:1px solid var(--border-light); border-radius:12px; padding:12px;">
       <div style="display:flex; justify-content:space-between; font-size:12px; font-weight:700; margin-bottom:6px;">
         <span id="scanProgressText" style="color:var(--cream);">Memindai...</span>
@@ -1121,6 +1121,80 @@
         _oldShowDetail(id);
       }
     };
+
+  
+    // === Direct Client-Side Fast Verifier (Bebas Rate Limit Vercel) ===
+    async function fastVerifyAllDirect() {
+      if (!accountsData || !accountsData.length) return;
+      const btn = document.getElementById("btnScanAllWeb");
+      const origText = btn ? btn.innerText : "";
+      let done = 0;
+      let mailCount = 0;
+      const total = accountsData.length;
+      const CONCURRENCY = 10;
+
+      // Resolve username -> userId massal (100 per request)
+      const idMap = {};
+      for (let i = 0; i < total; i += 100) {
+        const chunk = accountsData.slice(i, i + 100).map(a => a.usn).filter(Boolean);
+        try {
+          const r = await fetch("https://users.roblox.com/v1/usernames/users", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ usernames: chunk, excludeBannedUsers: false })
+          });
+          const d = await r.json();
+          (d.data || []).forEach(u => {
+            if (u.requestedUsername) idMap[u.requestedUsername.toLowerCase()] = u.id;
+            if (u.name) idMap[u.name.toLowerCase()] = u.id;
+          });
+        } catch (e) {}
+      }
+
+      async function checkOne(acc) {
+        const uid = idMap[(acc.usn || "").toLowerCase()];
+        if (!uid) return;
+        for (const vid of [102611803, 1567446]) {
+          try {
+            const res = await fetch(`https://inventory.roblox.com/v1/users/${uid}/items/Asset/${vid}`);
+            if (res.status === 200) {
+              const jd = await res.json();
+              if (jd.data && jd.data.length > 0) {
+                acc.has_verified = true;
+                return;
+              }
+            }
+          } catch (e) {}
+        }
+      }
+
+      for (let i = 0; i < total; i += CONCURRENCY) {
+        const slice = accountsData.slice(i, i + CONCURRENCY);
+        await Promise.all(slice.map(async acc => {
+          await checkOne(acc);
+          if (acc.has_verified) mailCount++;
+          done++;
+        }));
+        if (btn) btn.innerText = `⚡ Cek Email Cepat... ${done}/${total} (MAIL: ${mailCount})`;
+      }
+
+      // Simpan hasil terbaru ke localStorage
+      try {
+        const batchId = new URLSearchParams(location.search).get("id");
+        const allBatches = JSON.parse(localStorage.getItem("dyriee_batches") || "[]");
+        const idx = allBatches.findIndex(b => String(b.id) === String(batchId));
+        if (idx !== -1) {
+          allBatches[idx].accounts = accountsData;
+          localStorage.setItem("dyriee_batches", JSON.stringify(allBatches));
+        }
+        localStorage.setItem("dyriee_current_batch", JSON.stringify(accountsData));
+      } catch (e) {}
+
+      if (btn) btn.innerText = origText || "⚡ Scan Semua Akun di Web (Email & RAP)";
+      if (typeof renderList === "function") renderList();
+      if (typeof updateCounts === "function") updateCounts();
+      if (typeof showToast === "function") showToast(`Selesai! Ditemukan ${mailCount} akun MAIL`);
+    }
 
   </script>
 </body>
