@@ -10,8 +10,7 @@
       --bg: #0c0c0e; --surface: #151518; --surface-2: #1e1e23; --surface-hover: #25252b;
       --border: rgba(255, 255, 255, 0.08); --border-light: rgba(255, 255, 255, 0.14);
       --text: #f4f4f6; --muted: #8a8a93; --cream: #f6e7b8; --cream-dark: #8c8266;
-      --red: #e55353; --red-bg: rgba(229, 83, 83, 0.06); --red-border: rgba(229, 83, 83, 0.25);
-      --green: #34d399; --blue: #38bdf8; --purple: #c084fc;
+      --red: #e55353; --green: #34d399; --blue: #38bdf8; --purple: #c084fc;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
     body {
@@ -34,16 +33,6 @@
     .title-area h2 { font-family: 'Pixelify Sans', sans-serif; font-size: 32px; font-weight: 700; color: #fff; line-height: 1.15; letter-spacing: 0.5px; }
     .title-area h2 span { color: var(--cream); }
     .title-area p { color: var(--muted); font-size: 13.5px; line-height: 1.5; margin-top: 8px; }
-
-    .quota-card { background: linear-gradient(180deg, rgba(229,83,83,0.08) 0%, rgba(21,21,24,0.9) 100%); border: 1px solid var(--red-border); border-radius: 16px; padding: 16px; }
-    .quota-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-    .quota-label { font-size: 11px; font-weight: 700; color: var(--muted); letter-spacing: 1.5px; }
-    .quota-count { font-size: 13px; font-weight: 700; color: var(--red); font-family: monospace; }
-    .quota-bar { height: 5px; background: rgba(255,255,255,0.08); border-radius: 99px; overflow: hidden; margin-bottom: 10px; }
-    .quota-fill { height: 100%; background: var(--red); width: 100%; border-radius: 99px; }
-    .quota-note { font-size: 11.5px; color: var(--muted); font-family: monospace; margin-bottom: 14px; }
-    .quota-actions { display: flex; gap: 10px; align-items: center; }
-    .btn-pill { background: var(--surface-2); border: 1px solid var(--border-light); color: var(--text); padding: 8px 14px; border-radius: 10px; font-size: 12.5px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
 
     .tabs { display: flex; background: var(--surface); border: 1px solid var(--border); border-radius: 13px; padding: 4px; gap: 4px; }
     .tab { flex: 1; padding: 10px 8px; text-align: center; font-size: 13px; font-weight: 600; border-radius: 9px; cursor: pointer; color: var(--muted); transition: all 0.2s; }
@@ -113,11 +102,16 @@
     </div>
 
     <div id="tab-tersimpan" class="tab-content active">
-      <div class="data-card selected" id="savedCard" onclick="toggleSelectCard()">
+      <div id="emptySavedMsg" style="display:none; text-align:center; padding:28px 16px; background:var(--surface); border:1px dashed var(--border-light); border-radius:16px; color:var(--muted); font-size:13px; line-height:1.6;">
+        Belum ada data tersimpan.<br>
+        <span style="color:var(--cream); font-weight:700; cursor:pointer;" onclick="goNewTab()">+ Buat &amp; Scan Data Baru →</span>
+      </div>
+
+      <div class="data-card selected" id="savedCard" style="display:none;" onclick="toggleSelectCard()">
         <div class="custom-check" id="checkIcon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
         <div class="data-body">
-          <div class="data-title" id="savedTitle">Memuat data...</div>
-          <div class="data-sub" id="savedSubtitle">Mengambil accounts.json...</div>
+          <div class="data-title" id="savedTitle">Hasil Scan</div>
+          <div class="data-sub" id="savedSubtitle">0 akun</div>
           <div class="badge-row" id="savedBadges"></div>
           <div id="savedPrivateBadge"></div>
         </div>
@@ -126,19 +120,13 @@
           <button class="icon-action" title="Hapus" onclick="hapusData()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
         </div>
       </div>
-      <button class="btn-primary" id="btnOpenBatch" onclick="openSelectedBatch()">Buka data terpilih</button>
-      <button class="btn-danger" onclick="hapusData()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>Hapus semua data</button>
+
+      <button class="btn-primary" id="btnOpenBatch" style="display:none;" onclick="openSelectedBatch()">Buka data terpilih</button>
+      <button class="btn-danger" id="btnClearAll" style="display:none;" onclick="hapusData()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>Hapus semua data</button>
       <div class="footer-hint">Ada akun yang negaranya "Unknown"? <a href="batch.html">Isi IP-nya di sini →</a></div>
     </div>
 
     <div id="tab-baru" class="tab-content">
-      <div>
-        <label class="field-label">MASUKKAN KE</label>
-        <select class="select-box" id="insertTarget">
-          <option value="new">Data baru (Scan Email &amp; RAP)</option>
-          
-        </select>
-      </div>
       <div>
         <label class="field-label">NAMA DATA BARU (OPSIONAL)</label>
         <input type="text" class="input-box" id="namaData" placeholder="misal: Order #17 · 17 Nov">
@@ -171,8 +159,16 @@
     function switchTab(tabName, e) {
       document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
       document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-      if (e && e.target) e.target.classList.add('active');
-      document.getElementById(`tab-${tabName}`).classList.add('active');
+      if (e && e.currentTarget) e.currentTarget.classList.add('active');
+      document.getElementById('tab-' + tabName).classList.add('active');
+    }
+
+    function goNewTab() {
+      const tabs = document.querySelectorAll('.tab');
+      tabs.forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      tabs[1].classList.add('active');
+      document.getElementById('tab-baru').classList.add('active');
     }
 
     function toggleSelectCard() {
@@ -182,7 +178,7 @@
       const btn = document.getElementById('btnOpenBatch');
       if (isCardSelected) {
         card.classList.add('selected');
-        check.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+        check.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
         btn.classList.remove('muted-btn');
       } else {
         card.classList.remove('selected');
@@ -193,60 +189,57 @@
 
     function openSelectedBatch() {
       if (!isCardSelected) { alert('Centang data terlebih dahulu untuk membukanya.'); return; }
-      localStorage.removeItem('dyriee_scanned_json');
       window.location.href = 'batch.html';
     }
 
     function loadAccountsData() {
       const localScanned = localStorage.getItem('dyriee_scanned_json');
+      const emptyMsg = document.getElementById('emptySavedMsg');
       const card = document.getElementById('savedCard');
       const btnOpen = document.getElementById('btnOpenBatch');
+      const btnClear = document.getElementById('btnClearAll');
 
       if (localScanned) {
-        const all = JSON.parse(localScanned);
-        loadedAccounts = all;
-        const total = all.length;
+        try {
+          const all = JSON.parse(localScanned);
+          if (Array.isArray(all) && all.length > 0) {
+            loadedAccounts = all;
+            emptyMsg.style.display = 'none';
+            card.style.display = 'flex';
+            btnOpen.style.display = 'block';
+            btnClear.style.display = 'flex';
 
-        if (total > 0) {
-          card.style.display = "flex";
-          btnOpen.style.display = "block";
-          const korblox = all.filter(a => (a.limited_found || []).includes("Korblox Deathspeaker")).length;
-          const maliv = all.filter(a => (a.limited_found || []).includes("Malivinius")).length;
-          const mail = all.filter(a => a.has_verified).length;
-          const totalRap = all.reduce((sum, a) => sum + Number(a.total_rap || 0), 0);
-          const withIp = all.filter(a => a.ip && a.ip !== "-" && a.ip !== "N/A").length;
-          const priv = all.filter(a => a.is_private || a.rap_private).length;
+            const korblox = all.filter(a => (a.limited_found || []).includes("Korblox Deathspeaker")).length;
+            const maliv = all.filter(a => (a.limited_found || []).includes("Malivinius")).length;
+            const mail = all.filter(a => a.has_verified).length;
+            const totalRap = all.reduce((sum, a) => sum + Number(a.total_rap || 0), 0);
+            const withIp = all.filter(a => a.ip && a.ip !== "-" && a.ip !== "N/A").length;
+            const priv = all.filter(a => a.is_private || a.rap_private).length;
 
-          document.getElementById('savedTitle').innerText = localStorage.getItem('dyriee_batch_name') || "Hasil Scan";
-          document.getElementById('savedSubtitle').innerHTML = `<strong>${total}</strong> akun &nbsp;<strong>${total}</strong> selesai`;
-          document.getElementById('savedBadges').innerHTML = `
-            ${korblox > 0 ? `<span class="badge k">K ${korblox}</span>` : ''}
-            ${maliv > 0 ? `<span class="badge maliv">MALIV ${maliv}</span>` : ''}
-            <span class="badge mail">MAIL ${mail}</span>
-            <span class="badge rap">RAP ${totalRap.toLocaleString()}</span>
-            <span class="badge">${withIp} IP</span>
-          `;
-          document.getElementById('savedPrivateBadge').innerHTML = priv > 0 ? `<span class="badge priv">${priv} privat</span>` : "";
-          return;
-        }
+            document.getElementById('savedTitle').innerText = localStorage.getItem('dyriee_batch_name') || "Hasil Scan";
+            document.getElementById('savedSubtitle').innerHTML = '<strong>' + all.length + '</strong> akun &nbsp;<strong>' + all.length + '</strong> selesai';
+            document.getElementById('savedBadges').innerHTML =
+              (korblox > 0 ? '<span class="badge k">K ' + korblox + '</span>' : '') +
+              (maliv > 0 ? '<span class="badge maliv">MALIV ' + maliv + '</span>' : '') +
+              '<span class="badge mail">MAIL ' + mail + '</span>' +
+              '<span class="badge rap">RAP ' + totalRap.toLocaleString() + '</span>' +
+              '<span class="badge">' + withIp + ' IP</span>';
+            document.getElementById('savedPrivateBadge').innerHTML = priv > 0 ? '<span class="badge priv">' + priv + ' privat</span>' : '';
+            return;
+          }
+        } catch (e) {}
       }
 
       loadedAccounts = [];
-      card.style.display = "none";
-      btnOpen.style.display = "none";
-      const emptyMsg = document.getElementById('emptySavedMsg');
-      if (!emptyMsg) {
-        const div = document.createElement('div');
-        div.id = 'emptySavedMsg';
-        div.style.cssText = "text-align:center; padding:28px 16px; background:var(--surface); border:1px dashed var(--border-light); border-radius:16px; color:var(--muted); font-size:13px;";
-        div.innerHTML = "Belum ada data tersimpan.<br><span style='color:var(--cream);font-weight:700;cursor:pointer;' onclick='document.querySelectorAll(".tab")[1].click()'>+ Buat &amp; Scan Data Baru →</span>";
-        document.getElementById('tab-tersimpan').prepend(div);
-      }
+      emptyMsg.style.display = 'block';
+      card.style.display = 'none';
+      btnOpen.style.display = 'none';
+      btnClear.style.display = 'none';
     }
 
     function downloadCurrentJsonTxt() {
       if (!loadedAccounts.length) { alert("Tidak ada data untuk diunduh."); return; }
-      const txt = loadedAccounts.map(a => `${a.usn || ''}:${a.pass || ''}:${a.ip || ''}`).join('\n');
+      const txt = loadedAccounts.map(a => (a.usn || '') + ':' + (a.pass || '') + ':' + (a.ip || '')).join('\n');
       const blob = new Blob([txt], { type: "text/plain" });
       const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = "dyriee_accounts.txt"; a.click();
     }
@@ -271,7 +264,7 @@
 
       const btn = document.getElementById('btnScanSubmit');
       const oldText = btn.innerText;
-      btn.innerText = "Memindai Topi Hijau & RAP...";
+      btn.innerText = "Memindai Email, Bundle & RAP...";
       btn.disabled = true;
 
       const lines = textData.split('\n').filter(l => l.trim() !== '');
@@ -286,9 +279,9 @@
 
       try {
         let allResults = [];
-        for (let i = 0; i < parsed.length; i += 10) {
-          const chunk = parsed.slice(i, i + 10);
-          btn.innerText = `Scanning (${Math.min(i + 10, parsed.length)}/${parsed.length})...`;
+        for (let i = 0; i < parsed.length; i += 15) {
+          const chunk = parsed.slice(i, i + 15);
+          btn.innerText = 'Scanning (' + Math.min(i + 15, parsed.length) + '/' + parsed.length + ')...';
 
           const res = await fetch('/api/scan', {
             method: 'POST',
@@ -296,17 +289,12 @@
             body: JSON.stringify({ accounts: chunk })
           });
 
-          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          if (!res.ok) throw new Error('HTTP ' + res.status);
           const data = await res.json();
           allResults = allResults.concat(data.results || []);
         }
 
-        const targetMode = document.getElementById('insertTarget').value;
-        if (targetMode === 'existing' && loadedAccounts.length > 0) {
-          allResults = [...loadedAccounts, ...allResults];
-        }
-
-        const batchName = document.getElementById('namaData').value.trim() || `Hasil Scan (${allResults.length})`;
+        const batchName = document.getElementById('namaData').value.trim() || ('Hasil Scan (' + allResults.length + ')');
         localStorage.setItem('dyriee_scanned_json', JSON.stringify(allResults));
         localStorage.setItem('dyriee_batch_name', batchName);
 
@@ -315,7 +303,7 @@
         alert("Gagal terhubung ke /api/scan (" + err.message + "). Data disimpan tanpa scan.");
         const fallback = parsed.map(p => ({
           usn: p.usn, pass: p.pass, ip: p.ip, location: "Unknown",
-          total_rap: 0, limited_found: [], has_verified: false, is_private: false
+          total_rap: 0, limited_found: [], limited_items: [], has_verified: false, is_private: false
         }));
         localStorage.setItem('dyriee_scanned_json', JSON.stringify(fallback));
         if (redirect) window.location.href = 'batch.html';
@@ -332,7 +320,6 @@
         localStorage.removeItem('dyriee_batch_name');
         localStorage.removeItem('dyriee_statuses');
         localStorage.removeItem('dyriee_stars');
-        alert("Data lokal berhasil dihapus!");
         loadAccountsData();
       }
     }
@@ -352,11 +339,11 @@
       if (!textData.trim()) { alert("Tempel atau pilih file data dulu!"); return; }
       const lines = textData.split('\n').filter(l => l.trim() !== '');
       const totalBagian = Math.ceil(lines.length / limit);
-      alert(`Berhasil memecah ${lines.length} akun menjadi ${totalBagian} bagian.`);
+      alert('Berhasil memecah ' + lines.length + ' akun menjadi ' + totalBagian + ' bagian.');
       for (let i = 0; i < totalBagian; i++) {
         const chunk = lines.slice(i * limit, (i + 1) * limit).join('\n');
         const blob = new Blob([chunk], { type: "text/plain" });
-        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `bagian_${i + 1}.txt`; a.click();
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'bagian_' + (i + 1) + '.txt'; a.click();
       }
     }
 
