@@ -24,7 +24,6 @@
       clearTimeout(timer);
     }
 
-    // Jika timeout / error, pecah jadi dua supaya tidak pernah macet
     if (subAccounts.length > 1 && depth < 3) {
       const mid = Math.ceil(subAccounts.length / 2);
       const [left, right] = await Promise.all([
@@ -37,7 +36,7 @@
     return subAccounts.map(a => ({
       usn: a.usn, pw: a.pw || "", ip: a.ip || "",
       has_verified: false, total_rap: 0, bundle_value: 0,
-      limited_items: [], is_private: false, avatar: "", location: "-"
+      limited_items: [], is_private: false, rate_limited: true, avatar: "", location: "-"
     }));
   }
 
@@ -47,15 +46,49 @@
     const accounts = Array.isArray(payload.accounts) ? payload.accounts : [];
     if (!accounts.length) return origFetch(url, options);
 
-    // Pecah 30 akun menjadi 3 sub-paket berisi 10 akun yang jalan serentak di 3 server Vercel berbeda
-    const subSize = 10;
+    // Jalankan 2 sub-paket paralel (8 akun per sub-paket) agar tidak memicu banjir 429
+    const subSize = 8;
     const groups = [];
     for (let i = 0; i < accounts.length; i += subSize) {
       groups.push(accounts.slice(i, i + subSize));
     }
 
-    const parts = await Promise.all(groups.map(g => callSubChunk(url, g, 0)));
-    const results = parts.flat();
+    const results = [];
+    for (let g = 0; g < groups.length; g += 2) {
+      const pair = groups.slice(g, g + 2);
+      const pairRes = await Promise.all(pair.map(chunk => callSubChunk(url, chunk, 0)));
+      results.push(...pairRes.flat());
+    }
+
+    // Ulangi HANYA akun yang collectibles-nya terkena 429 (rate_limited) setelah jeda 1.5 detik
+    for (let retryPass = 0; retryPass < 2; retryPass++) {
+      const rlIndices = [];
+      const rlAccounts = [];
+      results.forEach((r, idx) => {
+        if (r && r.rate_limited) {
+          rlIndices.push(idx);
+          rlAccounts.push(accounts[idx]);
+        }
+      });
+      if (!rlAccounts.length) break;
+      await new Promise(res => setTimeout(res, 1500 * (retryPass + 1)));
+      const retried = await callSubChunk(url, rlAccounts, 0);
+      retried.forEach((fresh, j) => {
+        const origIdx = rlIndices[j];
+        const prev = results[origIdx] || {};
+        results[origIdx] = Object.assign({}, prev, fresh, {
+          has_verified: Boolean(prev.has_verified || fresh.has_verified),
+          is_private: Boolean(prev.is_private || fresh.is_private),
+          total_rap: Math.max(Number(prev.total_rap || 0), Number(fresh.total_rap || 0)),
+          bundle_value: Math.max(Number(prev.bundle_value || 0), Number(fresh.bundle_value || 0)),
+          limited_items: (fresh.limited_items && fresh.limited_items.length >= (prev.limited_items || []).length)
+            ? fresh.limited_items
+            : (prev.limited_items || [])
+        });
+      });
+    }
+
+    results.forEach(r => { if (r) delete r.rate_limited; });
 
     return new Response(JSON.stringify({ results }), {
       status: 200,
@@ -72,6 +105,7 @@
   };
 })();
 </script>
+
 
 
 

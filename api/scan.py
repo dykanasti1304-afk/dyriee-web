@@ -114,7 +114,7 @@ def scan_batch(accounts):
     avatar_map = bulk_avatars(uids)
 
     tasks = {}
-    with concurrent.futures.ThreadPoolExecutor(max_workers=16) as ex:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=8) as ex:
         for idx, uid in enumerate(uids):
             if not uid:
                 continue
@@ -145,7 +145,7 @@ def scan_batch(accounts):
             "total_rap": 0,
             "bundle_value": 0,
             "limited_items": [],
-            "is_private": False,
+            "is_private": False, "rate_limited": False,
             "avatar": avatar_map.get(uid, "") if uid else "",
             "location": ip_map.get(ip, "-") if ip else "-"
         }
@@ -176,6 +176,8 @@ def scan_batch(accounts):
                     limited_items.append({"name": "Malivinius", "rap": 300, "is_bundle": True})
 
         st_col, col_data = done.get((idx, "col"), (0, {}))
+        if st_col == 429 or st_col == 0:
+            out["rate_limited"] = True
         if st_col == 403:
             out["is_private"] = True
             out["bundle_value"] = bundle_val
