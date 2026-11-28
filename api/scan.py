@@ -96,6 +96,12 @@ def scan_one(acc):
         if has_item(uid, "Asset", vid):
             verified = True
             break
+    if not verified:
+        st_av, av_data = req_json(f"https://avatar.roblox.com/v1/users/{uid}/avatar")
+        if st_av == 200 and isinstance(av_data, dict):
+            worn_ids = {a.get("id") for a in av_data.get("assets", [])}
+            if any(vid in worn_ids for vid in VERIFIED_ITEM_IDS):
+                verified = True
     out["has_verified"] = verified
 
     found_names = []
@@ -162,7 +168,7 @@ class handler(BaseHTTPRequestHandler):
             body = json.loads(self.rfile.read(length).decode("utf-8"))
             accounts = body.get("accounts", [])
 
-            with concurrent.futures.ThreadPoolExecutor(max_workers=15) as ex:
+            with concurrent.futures.ThreadPoolExecutor(max_workers=4) as ex:
                 results = list(ex.map(scan_one, accounts))
 
             self.send_response(200)
