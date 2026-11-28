@@ -6,13 +6,13 @@ import json
 import urllib.request
 import urllib.error, time as _time
 _orig_urlopen = urllib.request.urlopen
-def _retrying_urlopen(url, data=None, timeout=6, **kwargs):
-    for _attempt in range(3):
+def _retrying_urlopen(url, data=None, timeout=3.5, **kwargs):
+    for _attempt in range(2):
         try:
-            return _orig_urlopen(url, data=data, timeout=timeout, **kwargs)
+            return _orig_urlopen(url, data=data, timeout=3.5, **kwargs)
         except urllib.error.HTTPError as _he:
-            if _he.code == 429 and _attempt < 2:
-                _time.sleep(0.55 * (_attempt + 1))
+            if _he.code == 429 and _attempt == 0:
+                _time.sleep(0.25)
                 continue
             raise
 urllib.request.urlopen = _retrying_urlopen
@@ -209,32 +209,24 @@ def scan_one(acc):
             limited_items.append({"name": item_name, "rap": item_rap, "is_bundle": False})
         out["total_rap"] = rap
 
-    # Cek kepemilikan Korblox, Headless, & Malivinius di inventory publik (meski unequipped)
+    # Cek cepat unequipped khusus Korblox, Headless, & Malivinius agar tidak timeout di Vercel
     if not out.get("is_private"):
-        rep_items = {}
+        malivinius_ids = []
         if "WORN_SPECIAL_ASSETS" in globals():
             for aid, info in WORN_SPECIAL_ASSETS.items():
-                nm, val = info[0], info[1]
-                if nm not in rep_items:
-                    rep_items[nm] = (aid, val)
-        # Pastikan Korblox, Headless, dan Malivinius selalu masuk daftar cek
-        defaults = {
-            "Korblox Deathspeaker": (139607718, 17000, 192),
-            "Headless Horseman": (134082579, 31000, 201),
-        }
-        for d_name, (d_aid, d_val, d_bid) in defaults.items():
-            if d_name not in found_names:
-                if has_item(uid, "Asset", d_aid) or has_item(uid, "Bundle", d_bid):
-                    found_names.append(d_name)
-                    bundle_val += d_val
-                    limited_items.append({"name": d_name, "rap": d_val, "is_bundle": True})
-        for nm, (aid, val) in rep_items.items():
-            if nm in found_names:
-                continue
-            if has_item(uid, "Asset", aid):
-                found_names.append(nm)
-                bundle_val += val
-                limited_items.append({"name": nm, "rap": val, "is_bundle": True})
+                if "malivinius" in str(info[0]).lower():
+                    malivinius_ids.append((info[0], aid, info[1]))
+        checks = [
+            ("Korblox Deathspeaker", "Asset", 139607718, 17000),
+            ("Headless Horseman", "Asset", 134082579, 31000),
+        ]
+        for m_name, m_aid, m_val in malivinius_ids[:1]:
+            checks.append((m_name, "Asset", m_aid, m_val))
+        for c_name, c_type, c_id, c_val in checks:
+            if c_name not in found_names and has_item(uid, c_type, c_id):
+                found_names.append(c_name)
+                bundle_val += c_val
+                limited_items.append({"name": c_name, "rap": c_val, "is_bundle": True})
     out["bundle_value"] = bundle_val
     out["limited_found"] = found_names
     out["limited_items"] = limited_items
@@ -251,7 +243,7 @@ class handler(BaseHTTPRequestHandler):
             global PREFETCH_USERS, PREFETCH_AVATARS
             PREFETCH_USERS = bulk_resolve_users([a.get("usn","") for a in accounts])
             PREFETCH_AVATARS = bulk_avatars([u.get("id") for u in PREFETCH_USERS.values()])
-            with concurrent.futures.ThreadPoolExecutor(max_workers=5) as ex:
+            with concurrent.futures.ThreadPoolExecutor(max_workers=8) as ex:
                 results = list(ex.map(scan_one, accounts))
 
             self.send_response(200)

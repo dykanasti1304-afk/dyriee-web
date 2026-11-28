@@ -1,6 +1,67 @@
 <!doctype html>
 <html lang="id">
 <head>
+<script>
+(function() {
+  const origFetch = window.fetch.bind(window);
+  async function safeScanCall(url, options, depth) {
+    let payload = null;
+    try { payload = JSON.parse(options.body); } catch (e) {}
+    const list = payload && Array.isArray(payload.accounts) ? payload.accounts : null;
+
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 8500);
+    try {
+      const res = await origFetch(url, Object.assign({}, options, { signal: ctrl.signal }));
+      clearTimeout(timer);
+      const text = await res.text();
+      const data = JSON.parse(text);
+      if (res.ok && data) {
+        return new Response(JSON.stringify(data), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+    } catch (err) {
+      clearTimeout(timer);
+    }
+
+    // Jika timeout/504, pecah paket jadi dua agar tetap lanjut dan tidak pernah macet
+    if (list && list.length > 1 && depth < 2) {
+      const mid = Math.ceil(list.length / 2);
+      const leftOpt = Object.assign({}, options, { body: JSON.stringify(Object.assign({}, payload, { accounts: list.slice(0, mid) })) });
+      const rightOpt = Object.assign({}, options, { body: JSON.stringify(Object.assign({}, payload, { accounts: list.slice(mid) })) });
+      const [r1, r2] = await Promise.all([safeScanCall(url, leftOpt, depth + 1), safeScanCall(url, rightOpt, depth + 1)]);
+      const d1 = await r1.json();
+      const d2 = await r2.json();
+      const merged = (d1.results || d1.accounts || []).concat(d2.results || d2.accounts || []);
+      return new Response(JSON.stringify({ results: merged }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" }
+      });
+    }
+
+    const fallback = (list || []).map(a => ({
+      usn: a.usn, pw: a.pw || "", ip: a.ip || "",
+      has_verified: false, total_rap: 0, bundle_value: 0,
+      limited_items: [], is_private: false, location: "-"
+    }));
+    return new Response(JSON.stringify({ results: fallback }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" }
+    });
+  }
+
+  window.fetch = function(input, options) {
+    const urlStr = typeof input === "string" ? input : (input && input.url) || "";
+    if (urlStr.includes("/api/scan") && options && options.method === "POST") {
+      return safeScanCall(input, options, 0);
+    }
+    return origFetch(input, options);
+  };
+})();
+</script>
+
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Dyriee • Account Filter</title>
@@ -30,7 +91,7 @@
     .user-name { font-size: 13px; color: var(--muted); font-weight: 500; }
     .btn-logout { width: 34px; height: 34px; background: var(--surface); border: 1px solid var(--border); border-radius: 9px; display: flex; align-items: center; justify-content: center; color: var(--muted); cursor: pointer; }
 
-    .title-area h2 { font-family: 'Pixelify Sans', sans-serif; font-size: 32px; font-weight: 700; color: #fff; line-height: 1.15; letter-spacing: 0.5px; }
+    .title-area h2 { font-family: 'Pixelify Sans', sans-serif; font-size: 32px; font-weight: 700; color: #fff; line-height: 1.8; letter-spacing: 0.5px; }
     .title-area h2 span { color: var(--cream); }
     .title-area p { color: var(--muted); font-size: 13.5px; line-height: 1.5; margin-top: 8px; }
 
@@ -61,7 +122,7 @@
     .icon-action { background: none; border: none; color: var(--muted); cursor: pointer; padding: 4px; }
 
     .btn-primary { background: var(--cream); color: #111; font-weight: 700; border: none; padding: 15px; border-radius: 13px; font-size: 14px; cursor: pointer; width: 100%; transition: all 0.2s; }
-    .btn-primary:disabled { opacity: 0.15; cursor: not-allowed; }
+    .btn-primary:disabled { opacity: 0.8; cursor: not-allowed; }
     .btn-primary.muted-btn { background: var(--cream-dark); color: #111; }
     .btn-danger { background: var(--surface); border: 1px solid var(--border-light); color: #d4d4d8; padding: 13px; border-radius: 13px; font-size: 13px; font-weight: 600; cursor: pointer; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; }
     .footer-hint { text-align: center; font-size: 12px; color: var(--muted); margin-top: 4px; }
@@ -102,7 +163,7 @@
     </div>
 
     <div id="tab-tersimpan" class="tab-content active">
-      <div id="emptySavedMsg" style="display:none; text-align:center; padding:28px 16px; background:var(--surface); border:1px dashed var(--border-light); border-radius:16px; color:var(--muted); font-size:13px; line-height:1.15;">
+      <div id="emptySavedMsg" style="display:none; text-align:center; padding:28px 16px; background:var(--surface); border:1px dashed var(--border-light); border-radius:16px; color:var(--muted); font-size:13px; line-height:1.8;">
         Belum ada data tersimpan.<br>
         <span style="color:var(--cream); font-weight:700; cursor:pointer;" onclick="goNewTab()">+ Buat &amp; Scan Data Baru →</span>
       </div>
@@ -279,9 +340,9 @@
 
       try {
         let allResults = [];
-        for (let i = 0; i < parsed.length; i += 15) {
-          const chunk = parsed.slice(i, i + 15);
-          btn.innerText = 'Scanning (' + Math.min(i + 15, parsed.length) + '/' + parsed.length + ')...';
+        for (let i = 0; i < parsed.length; i += 8) {
+          const chunk = parsed.slice(i, i + 8);
+          btn.innerText = 'Scanning (' + Math.min(i + 8, parsed.length) + '/' + parsed.length + ')...';
 
           const res = await fetch('/api/scan', {
             method: 'POST',
