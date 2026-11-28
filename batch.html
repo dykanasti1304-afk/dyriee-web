@@ -513,7 +513,7 @@
       <div class="ad-actions-grid">
         <button class="ad-act-btn primary" id="adCopyUsnBtn">📋 Salin USN</button>
         <button class="ad-act-btn" id="adCopyPwBtn">🔑 Salin PW</button>
-            <button class="btn-copy-pw" style="padding: 0 12px; background: var(--card2); border: 1px solid var(--border); color: var(--cream);" onclick="event.stopPropagation(); openAccDetailByUsn('${acc.usn}')">🔍 Detail</button>
+            <button class="btn-copy" style="padding: 0 12px; background: var(--card2); border: 1px solid var(--border); color: var(--cream);" onclick="event.stopPropagation(); openAccDetailByUsn('${acc.usn}')">🔍 Detail</button>
         <button class="ad-act-btn st-valid" id="adStValid" onclick="setAdStatus('valid')">✓ Valid</button>
         <button class="ad-act-btn st-invalid" id="adStInvalid" onclick="setAdStatus('invalid')">✕ Invalid</button>
         <button class="ad-act-btn st-secure" id="adStSecure" onclick="setAdStatus('secure')">🛡 Secure</button>
@@ -796,12 +796,12 @@
                   <span>🌐 ${acc.ip}</span>
                 </div>
                 <div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
-                  ${acc.has_verified ? `<span class="mail-pill">MAIL</span>` : ''}
+                  ${acc.has_verified ? `<span class="mail-pill">MAIL</span>` : `<span class="mail-pill" style="background:rgba(148,163,184,0.14);color:#cbd5e1;border:1px solid rgba(148,163,184,0.3);">DATPOL/DATPEN</span>`}
                   ${limitedTags.join('')}
                 </div>
               </div>
             </div>
-            <div class="acc-actions">
+            <div class="acc-actions" style="display:grid; grid-template-columns: 1fr 1fr auto; gap:8px;">
               <button class="btn-copy" onclick="event.stopPropagation(); copyText('${acc.usn.replace(/'/g, "\\'")}', 'USN Disalin!')">❏ Salin USN</button>
               <button class="btn-copy pw" onclick="event.stopPropagation(); copyText('${acc.pw.replace(/'/g, "\\'")}', 'PW Disalin!')">⚷ Salin PW</button>
             </div>
