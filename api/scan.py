@@ -187,6 +187,24 @@ def scan_one(acc):
             limited_items.append({"name": item_name, "rap": item_rap, "is_bundle": False})
         out["total_rap"] = rap
 
+    # Cek kepemilikan Bundle/Asset spesial (Korblox, Malivinius, Headless, dll.) di inventory publik meski unequipped
+    if not out.get("is_private") and "WORN_SPECIAL_ASSETS" in globals():
+        rep_by_name = {}
+        for aid, info in WORN_SPECIAL_ASSETS.items():
+            b_name, b_val = info[0], info[1]
+            if b_name not in rep_by_name:
+                rep_by_name[b_name] = (aid, b_val)
+        extra_bundles = {"Korblox Deathspeaker": 192, "Headless Horseman": 201}
+        for b_name, (rep_aid, b_val) in rep_by_name.items():
+            if b_name in found_names:
+                continue
+            owned = has_item(uid, "Asset", rep_aid)
+            if not owned and b_name in extra_bundles:
+                owned = has_item(uid, "Bundle", extra_bundles[b_name])
+            if owned:
+                found_names.append(b_name)
+                bundle_val += b_val
+                limited_items.append({"name": b_name, "rap": b_val, "is_bundle": True})
     out["bundle_value"] = bundle_val
     out["limited_found"] = found_names
     out["limited_items"] = limited_items
