@@ -513,6 +513,7 @@
       <div class="ad-actions-grid">
         <button class="ad-act-btn primary" id="adCopyUsnBtn">📋 Salin USN</button>
         <button class="ad-act-btn" id="adCopyPwBtn">🔑 Salin PW</button>
+            <button class="btn-copy-pw" style="padding: 0 12px; background: var(--card2); border: 1px solid var(--border); color: var(--cream);" onclick="event.stopPropagation(); openAccDetailByUsn('${acc.usn}')">🔍 Detail</button>
         <button class="ad-act-btn st-valid" id="adStValid" onclick="setAdStatus('valid')">✓ Valid</button>
         <button class="ad-act-btn st-invalid" id="adStInvalid" onclick="setAdStatus('invalid')">✕ Invalid</button>
         <button class="ad-act-btn st-secure" id="adStSecure" onclick="setAdStatus('secure')">🛡 Secure</button>
@@ -782,7 +783,7 @@
         if (acc.malivinius) limitedTags.push(`<span style="background:#0ea5e9; color:#fff; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:700;">MALIV</span>`);
 
         return `
-          <div class="acc-card">
+          <div class="acc-card" style="cursor:pointer;" onclick="openAccDetailByUsn('${acc.usn}')">
             <button class="star-btn ${isStarred ? 'starred' : ''}" onclick="event.stopPropagation(); toggleStar('${acc.id}')">${isStarred ? '★' : '☆'}</button>
             <div class="acc-top" onclick="openAccDetailByUsn('${acc.usn}')">
               <img class="acc-avatar" src="${acc.avatar}" onerror="this.src='${DEFAULT_AVATAR}'">
@@ -801,14 +802,14 @@
               </div>
             </div>
             <div class="acc-actions">
-              <button class="btn-copy" onclick="copyText('${acc.usn.replace(/'/g, "\\'")}', 'USN Disalin!')">❏ Salin USN</button>
-              <button class="btn-copy pw" onclick="copyText('${acc.pw.replace(/'/g, "\\'")}', 'PW Disalin!')">⚷ Salin PW</button>
+              <button class="btn-copy" onclick="event.stopPropagation(); copyText('${acc.usn.replace(/'/g, "\\'")}', 'USN Disalin!')">❏ Salin USN</button>
+              <button class="btn-copy pw" onclick="event.stopPropagation(); copyText('${acc.pw.replace(/'/g, "\\'")}', 'PW Disalin!')">⚷ Salin PW</button>
             </div>
             <div class="status-actions">
-              <button class="btn-status ${currentStatus === 'valid' ? 'active-valid' : ''}" onclick="setStatus(${acc.id}, 'valid')"><span>✓</span>VALID</button>
-              <button class="btn-status ${currentStatus === 'invalid' ? 'active-invalid' : ''}" onclick="setStatus(${acc.id}, 'invalid')"><span>✕</span>INVALID</button>
-              <button class="btn-status ${currentStatus === 'secure' ? 'active-secure' : ''}" onclick="setStatus(${acc.id}, 'secure')"><span>🛡</span>SECURE</button>
-              <button class="btn-status ${currentStatus === 'cross' ? 'active-cross' : ''}" onclick="setStatus(${acc.id}, 'cross')"><span>⚠</span>CROSS</button>
+              <button class="btn-status ${currentStatus === 'valid' ? 'active-valid' : ''}" onclick="event.stopPropagation(); setStatus(${acc.id}, 'valid')"><span>✓</span>VALID</button>
+              <button class="btn-status ${currentStatus === 'invalid' ? 'active-invalid' : ''}" onclick="event.stopPropagation(); setStatus(${acc.id}, 'invalid')"><span>✕</span>INVALID</button>
+              <button class="btn-status ${currentStatus === 'secure' ? 'active-secure' : ''}" onclick="event.stopPropagation(); setStatus(${acc.id}, 'secure')"><span>🛡</span>SECURE</button>
+              <button class="btn-status ${currentStatus === 'cross' ? 'active-cross' : ''}" onclick="event.stopPropagation(); setStatus(${acc.id}, 'cross')"><span>⚠</span>CROSS</button>
             </div>
           </div>
         `;
