@@ -1040,12 +1040,27 @@
       const subEl = document.getElementById('batchSubtitle');
       if (bName && subEl) subEl.innerText = bName;
 
-      const localScanned = localStorage.getItem('dyriee_scanned_json');
-      if (localScanned) {
-        try {
-          rawData = mapAccountList(JSON.parse(localScanned));
-        } catch (e) {
-          rawData = [];
+      const keys = ['dyriee_scanned_json', 'dyriee_accounts', 'dyriee_data'];
+      for (const k of keys) {
+        const val = localStorage.getItem(k);
+        if (val) {
+          try {
+            const parsed = JSON.parse(val);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              rawData = mapAccountList(parsed);
+              break;
+            }
+          } catch (e) {}
+        }
+      }
+      if (!rawData.length) {
+        const rawTxt = localStorage.getItem('dyriee_raw_data');
+        if (rawTxt && rawTxt.trim()) {
+          const lines = rawTxt.split('\n').filter(l => l.trim());
+          rawData = mapAccountList(lines.map(l => {
+            const p = l.trim().split(/[:/]/);
+            return { usn: p[0] || '', pass: p[1] || '-', ip: p[2] || '-' };
+          }));
         }
       }
       renderAll();
