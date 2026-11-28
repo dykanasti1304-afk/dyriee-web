@@ -36,7 +36,7 @@ def map_asset_category(type_name):
         return "Baju"
     if any(k in t for k in ["pants", "shorts", "skirt", "dress"]):
         return "Celana"
-    if t in ["head", "torso", "leftarm", "rightarm", "leftleg", "rightleg", "dynamichead"] or any(k in t for k in ["eyebrow", "eyelash"]):
+    if t in ["head", "torso", "leftarm", "rightarm", "leftleg", "rightleg", "dynamichead", "face"] or any(k in t for k in ["eyebrow", "eyelash"]):
         return "Body"
     return "Aksesoris"
 
@@ -105,7 +105,6 @@ def get_detail(usn, ip=""):
     out["uid"] = uid
     out["display_name"] = users[0].get("displayName") or usn
 
-    # Ambil semua data akun secara paralel
     urls = {
         "prof": f"https://users.roblox.com/v1/users/{uid}",
         "headshot": f"https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds={uid}&size=150x150&format=Png&isCircular=false",
@@ -142,7 +141,6 @@ def get_detail(usn, ip=""):
         if st_s == 200 and isinstance(sdata, dict):
             out[okey] = int(sdata.get("count") or 0)
 
-    # Avatar assets (Body, Hair, Baju, Celana, Aksesoris, Animation) + Emotes
     st_av, av = res_map["avatar"]
     found_names = set()
     worn_assets = []
@@ -189,7 +187,6 @@ def get_detail(usn, ip=""):
             out["total_rap"] += rap
             out["items"].append({"name": nm, "rap": rap, "type": "Limited"})
 
-    # Groups
     st_g, gdata = res_map["groups"]
     groups_list = []
     if st_g == 200 and isinstance(gdata, dict):
@@ -205,7 +202,6 @@ def get_detail(usn, ip=""):
                     "image": ""
                 })
 
-    # Favorite Games
     st_fg, fgdata = res_map["fav_games"]
     games_list = []
     if st_fg == 200 and isinstance(fgdata, dict):
@@ -218,7 +214,6 @@ def get_detail(usn, ip=""):
                     "image": ""
                 })
 
-    # Badges
     st_bg, bgdata = res_map["badges"]
     badges_list = []
     if st_bg == 200 and isinstance(bgdata, dict):
@@ -230,7 +225,6 @@ def get_detail(usn, ip=""):
                     "image": ""
                 })
 
-    # Ambil semua thumbnail (Assets+Emote, Group, Game, Badge) secara paralel
     thumb_urls = {}
     if worn_assets:
         a_ids = ",".join(str(x["id"]) for x in worn_assets[:60])
