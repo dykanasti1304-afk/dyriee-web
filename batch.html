@@ -1205,7 +1205,7 @@
         // Tahap 1: Cek Email semua akun sampai tuntas
         await fastVerifyAllDirect();
         // Jeda 500ms sebelum masuk Tahap 2 agar koneksi bersih
-        await new Promise(r => setTimeout(r, 500));
+        await new Promise(r => setTimeout(r, 150));
         // Tahap 2: Lanjut cek RAP & Limited
         await scanRapOnlyBatch();
         if (typeof showToast === "function") showToast("Semua selesai! Email & RAP sudah ter-update.");
