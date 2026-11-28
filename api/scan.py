@@ -6,13 +6,13 @@ import json
 import urllib.request
 import urllib.error, time as _time
 _orig_urlopen = urllib.request.urlopen
-def _retrying_urlopen(url, data=None, timeout=3.5, **kwargs):
-    for _attempt in range(2):
+def _retrying_urlopen(url, data=None, timeout=5.0, **kwargs):
+    for _attempt in range(3):
         try:
-            return _orig_urlopen(url, data=data, timeout=3.5, **kwargs)
+            return _orig_urlopen(url, data=data, timeout=5.0, **kwargs)
         except urllib.error.HTTPError as _he:
-            if _he.code == 429 and _attempt == 0:
-                _time.sleep(0.25)
+            if _he.code == 429 and _attempt < 2:
+                _time.sleep(0.45 * (_attempt + 1))
                 continue
             raise
 urllib.request.urlopen = _retrying_urlopen
@@ -209,24 +209,36 @@ def scan_one(acc):
             limited_items.append({"name": item_name, "rap": item_rap, "is_bundle": False})
         out["total_rap"] = rap
 
-    # Cek cepat unequipped khusus Korblox, Headless, & Malivinius agar tidak timeout di Vercel
+    # Cek lengkap unequipped Korblox, Headless, & seluruh ID Malivinius (Asset & Bundle)
     if not out.get("is_private"):
-        malivinius_ids = []
+        malivinius_targets = []
         if "WORN_SPECIAL_ASSETS" in globals():
             for aid, info in WORN_SPECIAL_ASSETS.items():
                 if "malivinius" in str(info[0]).lower():
-                    malivinius_ids.append((info[0], aid, info[1]))
-        checks = [
-            ("Korblox Deathspeaker", "Asset", 139607718, 17000),
-            ("Headless Horseman", "Asset", 134082579, 31000),
-        ]
-        for m_name, m_aid, m_val in malivinius_ids[:1]:
-            checks.append((m_name, "Asset", m_aid, m_val))
-        for c_name, c_type, c_id, c_val in checks:
-            if c_name not in found_names and has_item(uid, c_type, c_id):
-                found_names.append(c_name)
-                bundle_val += c_val
-                limited_items.append({"name": c_name, "rap": c_val, "is_bundle": True})
+                    malivinius_targets.append((info[0], aid, info[1]))
+
+        # Cek Korblox (Asset kaki utama & Bundle 192)
+        if "Korblox Deathspeaker" not in found_names:
+            if has_item(uid, "Bundle", 192) or has_item(uid, "Asset", 139607718):
+                found_names.append("Korblox Deathspeaker")
+                bundle_val += 17000
+                limited_items.append({"name": "Korblox Deathspeaker", "rap": 17000, "is_bundle": True})
+
+        # Cek Headless (Asset kepala & Bundle 201)
+        if "Headless Horseman" not in found_names:
+            if has_item(uid, "Bundle", 201) or has_item(uid, "Asset", 134082579):
+                found_names.append("Headless Horseman")
+                bundle_val += 31000
+                limited_items.append({"name": "Headless Horseman", "rap": 31000, "is_bundle": True})
+
+        # Cek semua varian/bagian Malivinius (baik sebagai Bundle maupun Asset)
+        for m_name, m_id, m_val in malivinius_targets:
+            if m_name in found_names:
+                continue
+            if has_item(uid, "Bundle", m_id) or has_item(uid, "Asset", m_id):
+                found_names.append(m_name)
+                bundle_val += m_val
+                limited_items.append({"name": m_name, "rap": m_val, "is_bundle": True})
     out["bundle_value"] = bundle_val
     out["limited_found"] = found_names
     out["limited_items"] = limited_items
