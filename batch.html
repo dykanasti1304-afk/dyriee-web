@@ -783,7 +783,7 @@
 
         return `
           <div class="acc-card">
-            <button class="star-btn ${isStarred ? 'starred' : ''}" onclick="openAccDetailByUsn('${acc.usn}')">${isStarred ? '★' : '☆'}</button>
+            <button class="star-btn ${isStarred ? 'starred' : ''}" onclick="event.stopPropagation(); toggleStar('${acc.id}')">${isStarred ? '★' : '☆'}</button>
             <div class="acc-top" onclick="openAccDetailByUsn('${acc.usn}')">
               <img class="acc-avatar" src="${acc.avatar}" onerror="this.src='${DEFAULT_AVATAR}'">
               <div class="acc-info">
@@ -976,6 +976,7 @@
   
     // === Account Detail Module ===
     let activeDetailUsn = null;
+    let activeDetailId = null;
     let activeDetailIp = "-";
 
     function closeAccDetail() {
@@ -999,15 +1000,15 @@
 
     function toggleAdFav() {
       if (!activeDetailUsn) return;
-      if (typeof toggleStar === "function") toggleStar(activeDetailUsn);
-      const isFav = !!(typeof starsMap !== "undefined" && starsMap[activeDetailUsn]);
+      if (typeof toggleStar === "function") toggleStar(activeDetailId);
+      const isFav = !!(typeof localStars !== "undefined" && localStars[activeDetailId]);
       const btn = document.getElementById("adFavBtn");
       btn.classList.toggle("active", isFav);
       btn.innerText = isFav ? "★ Favorit" : "☆ Favorit";
     }
 
-    function refreshAdStatusButtons(usn) {
-      const st = (typeof statusMap !== "undefined" ? statusMap[usn] : null) || "active";
+    function refreshAdStatusButtons(id) {
+      const st = (typeof localStatus !== "undefined" ? localStatus[id] : null) || "active";
       document.getElementById("adStValid").classList.toggle("on", st === "valid");
       document.getElementById("adStInvalid").classList.toggle("on", st === "invalid");
       document.getElementById("adStSecure").classList.toggle("on", st === "secure");
@@ -1016,16 +1017,17 @@
 
     function setAdStatus(st) {
       if (!activeDetailUsn) return;
-      if (typeof setStatus === "function") setStatus(activeDetailUsn, st);
-      refreshAdStatusButtons(activeDetailUsn);
+      if (typeof setStatus === "function") setStatus(activeDetailId, st);
+      refreshAdStatusButtons(activeDetailId);
     }
 
     async function openAccDetailByUsn(usn) {
-      const list = (typeof rawData !== "undefined" ? rawData : []);
+      const list = (typeof accountsData !== "undefined" ? accountsData : []);
       const acc = list.find(a => a.usn === usn);
       if (!acc) return;
 
       activeDetailUsn = usn;
+      activeDetailId = acc.id;
       activeDetailIp = acc.ip || "-";
 
       document.getElementById("adAvatar").src = acc.avatar || "";
@@ -1047,7 +1049,7 @@
       const notes = JSON.parse(localStorage.getItem("dyriee_notes") || "{}");
       document.getElementById("adNoteInput").value = notes[usn] || "";
 
-      const isFav = !!(typeof starsMap !== "undefined" && starsMap[usn]);
+      const isFav = !!(typeof localStars !== "undefined" && localStars[acc.id]);
       const favBtn = document.getElementById("adFavBtn");
       favBtn.classList.toggle("active", isFav);
       favBtn.innerText = isFav ? "★ Favorit" : "☆ Favorit";
@@ -1058,7 +1060,7 @@
       document.getElementById("adCopyPwBtn").onclick = () => {
         if (typeof copyText === "function") copyText(acc.pw, "PW disalin!");
       };
-      refreshAdStatusButtons(usn);
+      refreshAdStatusButtons(acc.id);
 
       document.getElementById("adWearCount").innerText = "";
       document.getElementById("adBadgeCount").innerText = "";
@@ -1110,7 +1112,7 @@
     // Override showDetail lama supaya membuka halaman detail penuh
     const _oldShowDetail = typeof showDetail === "function" ? showDetail : null;
     showDetail = function(id) {
-      const list = (typeof rawData !== "undefined" ? rawData : []);
+      const list = (typeof accountsData !== "undefined" ? accountsData : []);
       const acc = list.find(a => String(a.id) === String(id) || a.usn === String(id));
       if (acc && typeof openAccDetailByUsn === "function") {
         openAccDetailByUsn(acc.usn);
