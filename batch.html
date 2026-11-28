@@ -584,7 +584,7 @@
 
     function init() {
       const bName = localStorage.getItem('dyriee_batch_name');
-      const subEl = document.getElementById('batchSubtitle');
+      const subEl = document.getElementById('headerTitle');
       if (bName && subEl) subEl.innerText = bName;
 
       const keys = ['dyriee_scanned_json', 'dyriee_accounts', 'dyriee_data'];
@@ -615,7 +615,7 @@
 
     async function rescanAllInBrowser() {
       if (!rawData.length) { alert("Belum ada data akun!"); return; }
-      const btn = document.getElementById('btnRescan');
+      const btn = document.getElementById('btnScanAllWeb');
       btn.disabled = true;
 
       let updated = [];
@@ -765,7 +765,7 @@
       });
 
       filtered.sort((a, b) => sortDesc ? (b.rap - a.rap) : (a.rap - b.rap));
-      const container = document.getElementById('accountList');
+      const container = document.getElementById('accList');
 
       if (filtered.length === 0) {
         container.innerHTML = `<div style="text-align:center; padding: 36px 20px; color: var(--muted); font-size: 13px;">Tidak ada akun yang cocok dengan filter ini.</div>`;
