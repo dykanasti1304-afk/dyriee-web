@@ -1033,12 +1033,10 @@
 
       const pill = document.getElementById("adMailPill");
       if (acc.has_verified) {
-        pill.className = "ad-pill mail";
-        pill.innerText = "verif mail";
-      } else {
-        pill.className = "ad-pill nomail";
-        pill.innerText = "unverified";
-      }
+          badgeParts.push('<span class="tag-badge mail">MAIL</span>');
+        } else {
+          badgeParts.push('<span class="tag-badge" style="background:rgba(148,163,184,0.14);color:#cbd5e1;border:1px solid rgba(148,163,184,0.3);">DATPOL/DATPEN</span>');
+        }
 
       document.getElementById("adRap").innerText = Number(acc.rap || 0).toLocaleString();
       document.getElementById("adItemCount").innerText = (acc.limitedItems || acc.limiteds || []).length;
