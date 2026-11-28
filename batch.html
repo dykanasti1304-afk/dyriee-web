@@ -205,6 +205,62 @@
     .detail-row:last-child { border-bottom: none; }
     .detail-label { color: var(--muted); flex-shrink: 0; }
     .detail-value { font-weight: 600; color: #fff; text-align: right; word-break: break-word; }
+
+    /* ACCOUNT DETAIL FULL MODAL (DYRIEE THEME) */
+    .acc-detail-overlay {
+      position: fixed; inset: 0; background: #0c0c0e;
+      background-image: linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+      background-size: 64px 100%;
+      z-index: 200; display: none; flex-direction: column; overflow-y: auto;
+      padding: 18px 16px 40px;
+    }
+    .acc-detail-overlay.open { display: flex; }
+    .acc-detail-inner { width: 100%; max-width: 480px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; }
+    .ad-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .ad-profile { display: flex; align-items: center; gap: 12px; min-width: 0; }
+    .ad-avatar { width: 52px; height: 52px; border-radius: 13px; background: var(--surface-2); border: 1px solid var(--border-light); object-fit: cover; flex-shrink: 0; }
+    .ad-usn { font-size: 16px; font-weight: 800; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .ad-pill { display: inline-block; margin-top: 5px; font-size: 11px; font-weight: 800; padding: 3px 9px; border-radius: 6px; font-family: monospace; }
+    .ad-pill.mail { background: rgba(52, 211, 153, 0.16); color: #34d399; border: 1px solid rgba(52, 211, 153, 0.3); }
+    .ad-pill.nomail { background: var(--surface-2); color: var(--muted); border: 1px solid var(--border); }
+    .ad-close { width: 36px; height: 36px; border-radius: 10px; background: var(--surface); border: 1px solid var(--border-light); color: #fff; font-size: 16px; cursor: pointer; flex-shrink: 0; }
+
+    .ad-3grid { display: grid; grid-template-columns: 1fr 1fr 1.25fr; gap: 8px; }
+    .ad-stat-box { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 12px; display: flex; flex-direction: column; justify-content: space-between; }
+    .ad-stat-val { font-size: 16px; font-weight: 800; color: #fff; font-family: monospace; word-break: break-all; }
+    .ad-stat-lbl { font-size: 11px; color: var(--muted); margin-top: 4px; }
+    .ad-copy-ip { margin-top: 8px; background: var(--surface-2); border: 1px solid var(--border-light); color: #d4d4d8; font-size: 11px; font-weight: 600; padding: 4px 8px; border-radius: 7px; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; width: fit-content; }
+
+    .ad-loc-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 13px 14px; }
+    .ad-loc-top { font-size: 13px; font-weight: 700; color: #fff; }
+    .ad-loc-isp { font-size: 11px; color: var(--muted); font-family: monospace; margin-top: 4px; text-transform: uppercase; }
+
+    .ad-sec-title { font-size: 10.5px; font-weight: 800; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; }
+    .ad-note-area { width: 100%; height: 76px; background: var(--surface); border: 1px solid var(--border-light); border-radius: 12px; padding: 11px 12px; color: #fff; font-size: 13px; resize: none; outline: none; }
+    .ad-note-btns { display: flex; gap: 8px; margin-top: 8px; }
+    .ad-btn-save { background: var(--cream); color: #111; border: none; border-radius: 10px; padding: 10px 16px; font-size: 12.5px; font-weight: 800; cursor: pointer; }
+    .ad-btn-fav { background: var(--surface); border: 1px solid var(--border-light); color: #fff; border-radius: 10px; padding: 10px 14px; font-size: 12.5px; font-weight: 700; cursor: pointer; }
+    .ad-btn-fav.active { border-color: var(--cream); color: var(--cream); background: rgba(246, 231, 184, 0.1); }
+
+    .ad-hscroll { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
+    .ad-hscroll::-webkit-scrollbar { display: none; }
+    .ad-item-card { width: 92px; flex-shrink: 0; display: flex; flex-direction: column; gap: 6px; }
+    .ad-item-thumb { width: 92px; height: 92px; background: var(--surface); border: 1px solid var(--border-light); border-radius: 13px; object-fit: cover; padding: 4px; }
+    .ad-item-name { font-size: 11px; color: #d4d4d8; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+    .ad-group-list { display: flex; flex-direction: column; gap: 8px; }
+    .ad-group-row { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 11px 13px; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+    .ad-group-name { font-size: 13px; font-weight: 700; color: #fff; }
+    .ad-group-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .ad-group-role { font-size: 10.5px; font-weight: 700; color: var(--cream); background: rgba(246, 231, 184, 0.1); border: 1px solid rgba(246, 231, 184, 0.25); padding: 3px 8px; border-radius: 6px; white-space: nowrap; }
+
+    .ad-actions-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 4px; }
+    .ad-act-btn { padding: 13px; border-radius: 12px; font-size: 13px; font-weight: 800; cursor: pointer; border: 1px solid var(--border-light); background: var(--surface); color: #fff; display: flex; align-items: center; justify-content: center; gap: 7px; }
+    .ad-act-btn.primary { background: var(--cream); color: #111; border: none; }
+    .ad-act-btn.st-valid.on { background: rgba(52, 211, 153, 0.15); border-color: #34d399; color: #34d399; }
+    .ad-act-btn.st-invalid.on { background: rgba(248, 113, 113, 0.15); border-color: #f87171; color: #f87171; }
+    .ad-act-btn.st-secure.on { background: rgba(56, 189, 248, 0.15); border-color: #38bdf8; color: #38bdf8; }
+    .ad-act-btn.st-cross.on { background: rgba(251, 191, 36, 0.15); border-color: #fbbf24; color: #fbbf24; }
   </style>
 </head>
 <body>
@@ -874,5 +930,80 @@
 
     loadAccountsData();
   </script>
+
+  <div class="acc-detail-overlay" id="accDetailOverlay">
+    <div class="acc-detail-inner">
+      <div class="ad-header">
+        <div class="ad-profile">
+          <img class="ad-avatar" id="adAvatar" src="" alt="">
+          <div style="min-width:0;">
+            <div class="ad-usn" id="adUsn">@username</div>
+            <span class="ad-pill nomail" id="adMailPill">unverified</span>
+          </div>
+        </div>
+        <button class="ad-close" onclick="closeAccDetail()">✕</button>
+      </div>
+
+      <div class="ad-3grid">
+        <div class="ad-stat-box">
+          <div class="ad-stat-val" id="adRap">0</div>
+          <div class="ad-stat-lbl">RAP</div>
+        </div>
+        <div class="ad-stat-box">
+          <div class="ad-stat-val" id="adItemCount">0</div>
+          <div class="ad-stat-lbl">item</div>
+        </div>
+        <div class="ad-stat-box">
+          <div class="ad-stat-val" id="adIp">-</div>
+          <div class="ad-stat-lbl">IP</div>
+          <button class="ad-copy-ip" onclick="copyAdIp()">📋 salin</button>
+        </div>
+      </div>
+
+      <div class="ad-loc-card">
+        <div class="ad-loc-top" id="adLocTop">🌍 Unknown</div>
+        <div class="ad-loc-isp" id="adLocIsp">Memuat info ISP &amp; kota...</div>
+      </div>
+
+      <div>
+        <div class="ad-sec-title">CATATAN</div>
+        <textarea class="ad-note-area" id="adNoteInput" placeholder="Misal: pw salah, kena ban, sudah dijual..."></textarea>
+        <div class="ad-note-btns">
+          <button class="ad-btn-save" onclick="saveAdNote()">Simpan catatan</button>
+          <button class="ad-btn-fav" id="adFavBtn" onclick="toggleAdFav()">☆ Favorit</button>
+        </div>
+      </div>
+
+      <div>
+        <div class="ad-sec-title"><span>SEDANG DIPAKAI</span><span id="adWearCount" style="font-family:monospace;"></span></div>
+        <div class="ad-hscroll" id="adWearList">
+          <div style="font-size:12px; color:var(--muted);">Memuat item avatar...</div>
+        </div>
+      </div>
+
+      <div>
+        <div class="ad-sec-title"><span>BADGE ROBLOX</span><span id="adBadgeCount" style="font-family:monospace;"></span></div>
+        <div class="ad-hscroll" id="adBadgeList">
+          <div style="font-size:12px; color:var(--muted);">Memuat badge...</div>
+        </div>
+      </div>
+
+      <div>
+        <div class="ad-sec-title"><span>GROUP</span><span id="adGroupCount" style="font-family:monospace;"></span></div>
+        <div class="ad-group-list" id="adGroupList">
+          <div style="font-size:12px; color:var(--muted);">Memuat group...</div>
+        </div>
+      </div>
+
+      <div class="ad-actions-grid">
+        <button class="ad-act-btn primary" id="adCopyUsnBtn">📋 Salin USN</button>
+        <button class="ad-act-btn" id="adCopyPwBtn">🔑 Salin PW</button>
+        <button class="ad-act-btn st-valid" id="adStValid" onclick="setAdStatus('valid')">✓ Valid</button>
+        <button class="ad-act-btn st-invalid" id="adStInvalid" onclick="setAdStatus('invalid')">✕ Invalid</button>
+        <button class="ad-act-btn st-secure" id="adStSecure" onclick="setAdStatus('secure')">🛡 Secure</button>
+        <button class="ad-act-btn st-cross" id="adStCross" onclick="setAdStatus('cross')">⚠ Cross</button>
+      </div>
+    </div>
+  </div>
 </body>
 </html>
