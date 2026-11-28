@@ -1,3 +1,5 @@
+PREFETCH_USERS = {}
+PREFETCH_AVATARS = {}
 import time
 from http.server import BaseHTTPRequestHandler
 import json
@@ -46,7 +48,7 @@ def req_json(url, method="GET", payload=None, timeout=6):
             return res.status, json.loads(res.read().decode("utf-8"))
     except urllib.error.HTTPError as e:
         if e.code == 429:
-            time.sleep(0.4)
+            time.sleep(0.2)
         return e.code, None
     except Exception:
         return 500, None
@@ -63,6 +65,34 @@ def has_item(uid, item_type, item_id):
     st, data = req_json(f"https://inventory.roblox.com/v1/users/{uid}/items/{item_type}/{item_id}", timeout=5)
     return st == 200 and data and len(data.get("data", [])) > 0
 
+
+def bulk_resolve_users(usernames):
+    clean = list({u.strip() for u in usernames if u and u.strip()})
+    user_map = {}
+    for i in range(0, len(clean), 100):
+        chunk = clean[i:i+100]
+        st, res = req_json("https://users.roblox.com/v1/usernames/users", "POST", {
+            "usernames": chunk,
+            "excludeBannedUsers": False
+        })
+        if st == 200 and isinstance(res, dict):
+            for item in res.get("data", []):
+                req_u = (item.get("requestedUsername") or item.get("name") or "").lower()
+                if req_u:
+                    user_map[req_u] = item
+    return user_map
+
+def bulk_avatars(user_ids):
+    ids = [str(uid) for uid in user_ids if uid]
+    av_map = {}
+    for i in range(0, len(ids), 100):
+        chunk = ids[i:i+100]
+        st, res = req_json(f"https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds={','.join(chunk)}&size=150x150&format=Png&isCircular=false")
+        if st == 200 and isinstance(res, dict):
+            for item in res.get("data", []):
+                av_map[item.get("targetId")] = item.get("imageUrl", "")
+    return av_map
+
 def scan_one(acc):
     usn = acc.get("usn", "").strip()
     pw = acc.get("pass", "-")
@@ -77,7 +107,8 @@ def scan_one(acc):
     if not usn:
         return out
 
-    st, udata = req_json("https://users.roblox.com/v1/usernames/users", "POST", {"usernames": [usn], "excludeBannedUsers": False})
+    cached_u = PREFETCH_USERS.get(usn.lower())
+    st, udata = (200, {"data": [cached_u]}) if cached_u else req_json("https://users.roblox.com/v1/usernames/users", "POST", {"usernames": [usn], "excludeBannedUsers": False})
     if st != 200 or not udata or not udata.get("data"):
         return out
 
@@ -85,7 +116,8 @@ def scan_one(acc):
     out["id"] = uid
     out["name"] = udata["data"][0].get("displayName", usn)
 
-    _, av = req_json(f"https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds={uid}&size=150x150&format=Png&isCircular=false")
+    cached_av = PREFETCH_AVATARS.get(uid)
+    _, av = (200, {"data": [{"imageUrl": cached_av}]}) if cached_av is not None else req_json(f"https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds={uid}&size=150x150&format=Png&isCircular=false")
     if av and av.get("data"):
         out["avatar_url"] = av["data"][0].get("imageUrl", "")
 
@@ -168,7 +200,10 @@ class handler(BaseHTTPRequestHandler):
             body = json.loads(self.rfile.read(length).decode("utf-8"))
             accounts = body.get("accounts", [])
 
-            with concurrent.futures.ThreadPoolExecutor(max_workers=4) as ex:
+            global PREFETCH_USERS, PREFETCH_AVATARS
+            PREFETCH_USERS = bulk_resolve_users([a.get("usn","") for a in accounts])
+            PREFETCH_AVATARS = bulk_avatars([u.get("id") for u in PREFETCH_USERS.values()])
+            with concurrent.futures.ThreadPoolExecutor(max_workers=12) as ex:
                 results = list(ex.map(scan_one, accounts))
 
             self.send_response(200)
