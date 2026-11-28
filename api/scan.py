@@ -10,7 +10,26 @@ VERIFIED_ITEM_ID = 102611803
 BUNDLES = {
     201: ("Headless Horseman", 31000),
     192: ("Korblox Deathspeaker", 17000),
-    1693: ("Malivinius", 300)
+    1693: ("Malivinius", 300),
+    338: ("Violet Valkyrie", 50000),
+    109: ("Ice Valkyrie", 40000)
+}
+
+# Asset ID bagian tubuh / aksesoris yang terbaca meski inventory PRIVATE (via Avatar API)
+WORN_SPECIAL_ASSETS = {
+    139607718: ("Korblox Deathspeaker", 17000),
+    139607673: ("Korblox Deathspeaker", 17000),
+    139607570: ("Korblox Deathspeaker", 17000),
+    139607625: ("Korblox Deathspeaker", 17000),
+    139607770: ("Korblox Deathspeaker", 17000),
+    1509305368: ("Headless Horseman", 31000),
+    134082579: ("Headless Horseman", 31000),
+    1402432199: ("Violet Valkyrie", 50000),
+    4390890198: ("Ice Valkyrie", 40000),
+    1365767: ("Valkyrie Helm", 20000),
+    1029025: ("Dominus Frigidus", 0),
+    138932314: ("Dominus Aureus", 0),
+    162067148: ("Dominus Infernus", 0)
 }
 
 def req_json(url, method="GET", payload=None, timeout=6):
@@ -67,20 +86,46 @@ def scan_one(acc):
     if av and av.get("data"):
         out["avatar_url"] = av["data"][0].get("imageUrl", "")
 
-    # Cek Topi Hijau Verifikasi Email (Asset 102611803)
+    # 1. Cek Topi Hijau Verifikasi Email
     out["has_verified"] = has_item(uid, "Asset", VERIFIED_ITEM_ID)
 
-    # Cek Bundle Spesial (Headless, Korblox, Malivinius)
     found_names = []
     limited_items = []
     bundle_val = 0
-    for bid, (label, price) in BUNDLES.items():
-        if has_item(uid, "Bundle", bid):
+
+    def add_bundle(label, price):
+        nonlocal bundle_val
+        if label not in found_names:
             found_names.append(label)
             limited_items.append({"name": label, "rap": 0, "bundle_price": price, "is_bundle": True})
             bundle_val += price
 
-    # Cek Item Limited & RAP per item
+    # 2. Cek Bundle via Inventory API (jika publik)
+    for bid, (label, price) in BUNDLES.items():
+        if has_item(uid, "Bundle", bid):
+            add_bundle(label, price)
+
+    # 3. Cek Avatar yang Sedang Dipakai (tetap tembus meski inventory PRIVATE!)
+    st_av, av_data = req_json(f"https://avatar.roblox.com/v1/users/{uid}/avatar", timeout=5)
+    if st_av == 200 and av_data:
+        for asset in av_data.get("assets", []):
+            aid = asset.get("id")
+            aname = (asset.get("name") or "").lower()
+            if aid in WORN_SPECIAL_ASSETS:
+                lbl, prc = WORN_SPECIAL_ASSETS[aid]
+                add_bundle(lbl, prc)
+            elif "korblox" in aname:
+                add_bundle("Korblox Deathspeaker", 17000)
+            elif "headless" in aname:
+                add_bundle("Headless Horseman", 31000)
+            elif "malivinius" in aname:
+                add_bundle("Malivinius", 300)
+            elif "valkyrie" in aname:
+                add_bundle(asset.get("name"), 50000)
+            elif "dominus" in aname:
+                add_bundle(asset.get("name"), 0)
+
+    # 4. Cek Item Limited & RAP
     st_col, col = req_json(f"https://inventory.roblox.com/v1/users/{uid}/assets/collectibles?limit=100")
     if st_col == 403:
         out["is_private"] = True
