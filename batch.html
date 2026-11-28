@@ -1287,6 +1287,112 @@
       } catch (e) {}
     }
 
+  
+    // === Global Interceptor untuk Tombol Detail Bawaan Kartu ===
+    document.addEventListener("click", function(e) {
+      const btn = e.target.closest("button");
+      if (!btn) return;
+      const txt = (btn.innerText || btn.textContent || "").trim();
+      if (!/detail/i.test(txt) || btn.id === "dyrieeCloseDetailBtn") return;
+
+      // Cari username (@usn) dari elemen kartu tempat tombol Detail diklik
+      let card = btn.parentElement;
+      let foundUsn = "";
+      for (let i = 0; i < 6 && card; i++) {
+        const m = (card.innerText || "").match(/@([A-Za-z0-9_]+)/);
+        if (m) {
+          foundUsn = m[1];
+          break;
+        }
+        card = card.parentElement;
+      }
+      if (!foundUsn) return;
+
+      e.preventDefault();
+      e.stopPropagation();
+      openAccountDetailByUsn(foundUsn);
+    }, true);
+
+    async function openAccountDetailByUsn(usn) {
+      const modal = document.getElementById("dyrieeDetailModal");
+      const body = document.getElementById("dyrieeDetailBody");
+      if (!modal || !body) return;
+
+      // Ambil data akun dari localStorage (dyriee_batches / dyriee_current_batch)
+      let list = [];
+      try {
+        const batchId = new URLSearchParams(location.search).get("id");
+        const allBatches = JSON.parse(localStorage.getItem("dyriee_batches") || "[]");
+        const foundBatch = allBatches.find(b => String(b.id) === String(batchId));
+        if (foundBatch && Array.isArray(foundBatch.accounts)) list = foundBatch.accounts;
+        if (!list.length) list = JSON.parse(localStorage.getItem("dyriee_current_batch") || "[]");
+      } catch (err) {}
+
+      const acc = list.find(a => String(a.usn).toLowerCase() === String(usn).toLowerCase()) || { usn };
+      modal.style.display = "flex";
+
+      const renderModal = (extra = {}) => {
+        const isMail = Boolean(acc.has_verified || extra.has_verified);
+        const isPriv = Boolean(acc.is_private || extra.is_private);
+        const rap = Math.max(Number(acc.total_rap || 0), Number(extra.total_rap || 0));
+        const bVal = Math.max(Number(acc.bundle_value || 0), Number(extra.bundle_value || 0));
+        const totalVal = rap + bVal;
+        const avatar = extra.avatar || acc.avatar || "";
+        const created = extra.created || acc.created || "Memuat...";
+        const uid = extra.uid || acc.uid || "-";
+        const loc = (extra.location && extra.location !== "-") ? extra.location : (acc.location || "-");
+        const items = (extra.items && extra.items.length) ? extra.items : (acc.limited_items || []);
+
+        const itemsHtml = items.length
+          ? items.map(it => `<div style="display:flex; justify-content:space-between; padding:8px 10px; background:rgba(255,255,255,0.05); border-radius:8px; margin-bottom:6px; font-size:12px;">
+              <span>${it.name}</span>
+              <span style="color:#fde047; font-weight:700;">${Number(it.rap || 0).toLocaleString()} RAP</span>
+            </div>`).join("")
+          : `<div style="font-size:12px; color:#a8a29e; padding:6px 0;">${isPriv ? "Inventory terkunci (Private)" : "Tidak ada item Limited / Bundle spesial"}</div>`;
+
+        body.innerHTML = `
+          <div style="display:flex; gap:12px; align-items:center; margin-bottom:14px;">
+            <img src="${avatar}" onerror="this.style.display='none'" style="width:56px; height:56px; border-radius:12px; background:#262523; object-fit:cover;">
+            <div>
+              <div style="font-size:16px; font-weight:700;">${acc.usn}</div>
+              <div style="font-size:12px; color:#a8a29e;">ID: ${uid} • Dibuat: ${created}</div>
+              <div style="display:flex; gap:6px; margin-top:6px; flex-wrap:wrap;">
+                <span style="font-size:11px; font-weight:700; padding:2px 8px; border-radius:6px; background:${isMail ? 'rgba(16,185,129,0.2)' : 'rgba(255,255,255,0.08)'}; color:${isMail ? '#6ee7b7' : '#d6d3d1'};">${isMail ? 'MAIL' : 'DATPOL/DATPEN'}</span>
+                ${isPriv ? '<span style="font-size:11px; font-weight:700; padding:2px 8px; border-radius:6px; background:rgba(244,63,94,0.2); color:#fda4af;">PRIVATE</span>' : ''}
+              </div>
+            </div>
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:14px;">
+            <div style="background:rgba(255,255,255,0.04); padding:10px; border-radius:10px;">
+              <div style="font-size:11px; color:#a8a29e;">TOTAL NILAI / RAP</div>
+              <div style="font-size:15px; font-weight:700; color:#fde047;">${totalVal.toLocaleString()}</div>
+            </div>
+            <div style="background:rgba(255,255,255,0.04); padding:10px; border-radius:10px;">
+              <div style="font-size:11px; color:#a8a29e;">NEGARA IP</div>
+              <div style="font-size:13px; font-weight:600;">${loc}</div>
+            </div>
+          </div>
+          <div style="font-size:11px; color:#a8a29e; margin-bottom:6px; font-weight:700;">CREDENTIAL</div>
+          <div style="background:rgba(255,255,255,0.04); padding:9px 10px; border-radius:8px; font-family:monospace; font-size:12px; margin-bottom:14px; word-break:break-all;">
+            ${acc.usn}:${acc.pw || ''}${acc.ip ? ':' + acc.ip : ''}
+          </div>
+          <div style="font-size:11px; color:#a8a29e; margin-bottom:6px; font-weight:700;">DAFTAR ITEM LIMITED & BUNDLE</div>
+          ${itemsHtml}
+        `;
+      };
+
+      renderModal();
+      try {
+        const res = await fetch(`/api/detail?usn=${encodeURIComponent(acc.usn)}&ip=${encodeURIComponent(acc.ip || "")}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.has_verified) acc.has_verified = true;
+          if (data.avatar) acc.avatar = data.avatar;
+          renderModal(data);
+        }
+      } catch (err) {}
+    }
+
   </script>
 
 <div id="dyrieeDetailModal" onclick="if(event.target===this)this.style.display='none'" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.78); z-index:9999; align-items:center; justify-content:center; padding:16px;">

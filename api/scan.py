@@ -4,6 +4,19 @@ import time
 from http.server import BaseHTTPRequestHandler
 import json
 import urllib.request
+import urllib.error, time as _time
+_orig_urlopen = urllib.request.urlopen
+def _retrying_urlopen(url, data=None, timeout=6, **kwargs):
+    for _attempt in range(3):
+        try:
+            return _orig_urlopen(url, data=data, timeout=timeout, **kwargs)
+        except urllib.error.HTTPError as _he:
+            if _he.code == 429 and _attempt < 2:
+                _time.sleep(0.55 * (_attempt + 1))
+                continue
+            raise
+urllib.request.urlopen = _retrying_urlopen
+
 import urllib.error
 import concurrent.futures
 
@@ -196,29 +209,32 @@ def scan_one(acc):
             limited_items.append({"name": item_name, "rap": item_rap, "is_bundle": False})
         out["total_rap"] = rap
 
-    # Cek cepat kepemilikan Bundle spesial (Korblox, Headless, dll) lewat 1x API bundles
+    # Cek kepemilikan Korblox, Headless, & Malivinius di inventory publik (meski unequipped)
     if not out.get("is_private"):
-        st_b, b_data = req_json(f"https://catalog.roblox.com/v1/users/{uid}/bundles?limit=100&sortOrder=Desc")
-        if st_b == 200 and isinstance(b_data, dict):
-            BUNDLE_MAP = {
-                192: ("Korblox Deathspeaker", 17000),
-                201: ("Headless Horseman", 31000),
-            }
-            for b in b_data.get("data", []):
-                bid = b.get("id")
-                bname = b.get("name", "")
-                if bid in BUNDLE_MAP:
-                    lbl, val = BUNDLE_MAP[bid]
-                    if lbl not in found_names:
-                        found_names.append(lbl)
-                        bundle_val += val
-                        limited_items.append({"name": lbl, "rap": val, "is_bundle": True})
-                elif "malivinius" in bname.lower() or "korblox" in bname.lower() or "headless" in bname.lower():
-                    if bname not in found_names:
-                        val = 17000 if "korblox" in bname.lower() else (31000 if "headless" in bname.lower() else 0)
-                        found_names.append(bname)
-                        bundle_val += val
-                        limited_items.append({"name": bname, "rap": val, "is_bundle": True})
+        rep_items = {}
+        if "WORN_SPECIAL_ASSETS" in globals():
+            for aid, info in WORN_SPECIAL_ASSETS.items():
+                nm, val = info[0], info[1]
+                if nm not in rep_items:
+                    rep_items[nm] = (aid, val)
+        # Pastikan Korblox, Headless, dan Malivinius selalu masuk daftar cek
+        defaults = {
+            "Korblox Deathspeaker": (139607718, 17000, 192),
+            "Headless Horseman": (134082579, 31000, 201),
+        }
+        for d_name, (d_aid, d_val, d_bid) in defaults.items():
+            if d_name not in found_names:
+                if has_item(uid, "Asset", d_aid) or has_item(uid, "Bundle", d_bid):
+                    found_names.append(d_name)
+                    bundle_val += d_val
+                    limited_items.append({"name": d_name, "rap": d_val, "is_bundle": True})
+        for nm, (aid, val) in rep_items.items():
+            if nm in found_names:
+                continue
+            if has_item(uid, "Asset", aid):
+                found_names.append(nm)
+                bundle_val += val
+                limited_items.append({"name": nm, "rap": val, "is_bundle": True})
     out["bundle_value"] = bundle_val
     out["limited_found"] = found_names
     out["limited_items"] = limited_items
@@ -235,7 +251,7 @@ class handler(BaseHTTPRequestHandler):
             global PREFETCH_USERS, PREFETCH_AVATARS
             PREFETCH_USERS = bulk_resolve_users([a.get("usn","") for a in accounts])
             PREFETCH_AVATARS = bulk_avatars([u.get("id") for u in PREFETCH_USERS.values()])
-            with concurrent.futures.ThreadPoolExecutor(max_workers=15) as ex:
+            with concurrent.futures.ThreadPoolExecutor(max_workers=5) as ex:
                 results = list(ex.map(scan_one, accounts))
 
             self.send_response(200)
